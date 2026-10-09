@@ -1,0 +1,46 @@
+/* Custom Pagination Styling */
+.pagination {
+    margin: 0;
+}
+
+.pagination .page-link {
+    color: var(--primary);
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin: 0 4px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.pagination .page-link:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.pagination .page-item.disabled .page-link {
+    background: #f8f9fa;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+}
+
+/* Responsive pagination text */
+@media (max-width: 576px) {
+    .pagination {
+        font-size: 14px;
+    }
+    
+    .pagination .page-link {
+        padding: 6px 10px;
+        margin: 0 2px;
+    }
+}

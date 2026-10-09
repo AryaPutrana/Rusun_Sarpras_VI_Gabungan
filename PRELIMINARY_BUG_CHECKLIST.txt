@@ -1,0 +1,207 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║               📋 PRELIMINARY BUG CHECKLIST (MANUAL) 📋                       ║
+║                                                                              ║
+║                   Tanggal: 09 Oktober 2026, 15:00 WIB                       ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Sambil menunggu automated testing selesai, berikut pre-check manual untuk 
+bug-bug yang sudah pasti ada berdasarkan code review:
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ BUG YANG SUDAH DIPERBAIKI
+═══════════════════════════════════════════════════════════════════════════════
+
+1. ✅ FIXED: Blade syntax error di dashboard.blade.php (line 458)
+   - Inventory section salah posisi
+   - Status: FIXED (sudah dipindahkan ke dalam @section)
+
+2. ✅ FIXED: Column 'min_stock' not found
+   - Migration tidak ter-copy
+   - Status: FIXED (migration sudah ditambahkan)
+
+3. ✅ FIXED: Wrong route 'withdrawals.create' 
+   - File: inventory/items/show.blade.php
+   - Status: FIXED (sudah ubah ke inventory.withdrawals.create)
+
+4. ✅ FIXED: Wrong route 'items.show' (2 files)
+   - inventory/dashboard/index.blade.php
+   - inventory/withdrawals/show.blade.php
+   - Status: FIXED (sudah ubah ke inventory.items.show)
+
+5. ✅ FIXED: jQuery not loaded
+   - Form withdrawal tidak bisa pilih barang
+   - Status: FIXED (jQuery CDN sudah ditambahkan)
+
+6. ✅ FIXED: Timezone UTC
+   - Jam mundur 7 jam
+   - Status: FIXED (timezone = Asia/Jakarta)
+
+7. ✅ FIXED: Datetime readonly
+   - User tidak bisa edit manual
+   - Status: FIXED (readonly dihapus)
+
+═══════════════════════════════════════════════════════════════════════════════
+🔍 POTENTIAL BUGS TO VERIFY (Automated Testing)
+═══════════════════════════════════════════════════════════════════════════════
+
+CATEGORY: ROUTES & NAVIGATION
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check: Apakah masih ada route lama yang belum diubah?
+    - Search pattern: route('items.', route('withdrawals.', route('reports.'
+    - Expected: 0 occurrence (semua harus inventory.*)
+    - Action: Automated testing akan verify
+
+[ ] Check: Broken links di navigation menu
+    - Dropdown "Inventory Material"
+    - Links ke items/withdrawals/reports
+    - Action: Automated testing akan cek
+
+CATEGORY: AUTHENTICATION & AUTHORIZATION
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check: RoleMiddleware blocking correct?
+    - Petugas tidak bisa akses admin features
+    - Admin bisa akses semua
+    - Action: Automated testing akan verify
+
+[ ] Check: Login validation
+    - Invalid credentials
+    - Empty fields
+    - CSRF token
+    - Action: Automated testing akan cek
+
+CATEGORY: FORM VALIDATION
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check: Item create validation
+    - Required fields
+    - File upload (size, type)
+    - Numeric validation (price, stock)
+    - Action: Automated testing akan verify
+
+[ ] Check: Withdrawal create validation
+    - Quantity > stock (harus error)
+    - Empty fields
+    - Multiple items
+    - Action: Automated testing akan cek
+
+[ ] Check: Monitoring create validation
+    - Date validation
+    - Kondisi dropdown
+    - Foto upload
+    - Action: Automated testing akan verify
+
+CATEGORY: DATABASE & QUERY
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check: N+1 query problem
+    - Dashboard loading
+    - Index pages with relations
+    - Action: Check query log
+
+[ ] Check: Stock deduction logic
+    - After withdrawal created
+    - Stock = current - quantity
+    - Action: Automated testing akan verify
+
+[ ] Check: Soft delete vs hard delete
+    - Items/withdrawals delete behavior
+    - Orphaned records
+    - Action: Code review + testing
+
+CATEGORY: FILE UPLOAD & STORAGE
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check: Storage link exists
+    - php artisan storage:link
+    - Action: User must verify
+
+[ ] Check: Foto display
+    - Item photos
+    - Monitoring photos
+    - Photo modal
+    - Action: Automated testing akan cek
+
+[ ] Check: File validation
+    - Max size
+    - Allowed types (jpg, png)
+    - Action: Automated testing akan verify
+
+CATEGORY: EXPORT FUNCTIONALITY
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check: PDF export (DOMPDF)
+    - Finance report PDF
+    - Inventory report PDF
+    - Images in PDF
+    - Action: Automated testing akan generate PDF
+
+[ ] Check: Excel export
+    - Inventory reports
+    - Data format
+    - Action: Automated testing akan generate Excel
+
+CATEGORY: UI/UX
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check: Responsive design
+    - Mobile view
+    - Tablet view
+    - Desktop view
+    - Action: Manual testing needed (browser DevTools)
+
+[ ] Check: Form user experience
+    - Auto-fill datetime
+    - Dropdown searchable?
+    - Error messages clear?
+    - Action: Automated + manual testing
+
+[ ] Check: Success/error messages
+    - Flash messages display
+    - Alert styling
+    - Action: Automated testing akan cek
+
+CATEGORY: SECURITY
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check: CSRF protection
+    - All POST/PUT/DELETE forms
+    - Action: Automated testing akan verify
+
+[ ] Check: SQL injection prevention
+    - Search inputs
+    - Filter inputs
+    - Action: Code review (Laravel sudah handle by default)
+
+[ ] Check: XSS prevention
+    - User input display
+    - Blade escaping
+    - Action: Code review (Laravel sudah handle by default)
+
+═══════════════════════════════════════════════════════════════════════════════
+📊 TESTING STATUS
+═══════════════════════════════════════════════════════════════════════════════
+
+AUTOMATED TESTING (6 Subagents):
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Team 1: Authentication           Status: 🟡 Running                          │
+│ Team 2: Dashboard (Retry)        Status: 🟡 Running                          │
+│ Team 3: Monitoring GWT            Status: 🟡 Running                          │
+│ Team 4: Laporan Bulanan           Status: 🟡 Running                          │
+│ Team 5: Inventory Material        Status: 🟡 Running                          │
+│ Team 6: Admin Features            Status: 🟡 Running                          │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+MANUAL PRE-CHECK:
+✅ 7 bugs sudah diperbaiki sebelumnya
+🔍 ~30 potential issues untuk di-verify oleh automated testing
+⏳ Waiting for automated testing results...
+
+NEXT STEPS:
+1. ⏳ Wait for all 6 subagents to complete
+2. 📋 Compile master bug list from all reports
+3. 🎯 Prioritize bugs by severity (CRITICAL → LOW)
+4. 🔧 Fix all bugs found
+5. ✅ Final verification
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Estimated completion time: ~3-5 minutes
+Current status: Testing in progress...
+
+═══════════════════════════════════════════════════════════════════════════════

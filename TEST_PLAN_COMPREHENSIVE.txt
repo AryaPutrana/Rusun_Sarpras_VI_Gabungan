@@ -1,0 +1,225 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║           🧪 COMPREHENSIVE TESTING - LOGIN TO LOGOUT 🧪                      ║
+║                                                                              ║
+║           Sistem Informasi Sarpras UPRS VI (Gabungan)                       ║
+║           Tanggal Test: 09 Oktober 2026, 14:48 WIB                          ║
+║           Tester: Hermes AI Agent (Kiro)                                     ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 TEST PLAN
+═══════════════════════════════════════════════════════════════════════════════
+
+SCOPE TESTING:
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 1. AUTHENTICATION                                                            │
+│    ✓ Login Form                                                              │
+│    ✓ Login Process (Admin + Petugas)                                         │
+│    ✓ Session Management                                                      │
+│    ✓ Logout Process                                                          │
+│                                                                              │
+│ 2. DASHBOARD                                                                 │
+│    ✓ Dashboard GWT Section                                                   │
+│    ✓ Dashboard Laporan Bulanan Section                                       │
+│    ✓ Dashboard Inventory Section                                             │
+│    ✓ Charts & Statistics                                                     │
+│                                                                              │
+│ 3. MONITORING HARIAN GWT                                                     │
+│    ✓ Input Monitoring (Create)                                               │
+│    ✓ Histori Monitoring (Index)                                              │
+│    ✓ Detail Monitoring (Show)                                                │
+│    ✓ Edit Monitoring (Update)                                                │
+│    ✓ Hapus Monitoring (Delete)                                               │
+│    ✓ Foto Upload & Display                                                   │
+│                                                                              │
+│ 4. LAPORAN BULANAN (KEUANGAN)                                                │
+│    ✓ Input Bulanan (Create)                                                  │
+│    ✓ Riwayat Bulanan (Petugas)                                               │
+│    ✓ Laporan Bulanan (Admin - Index)                                         │
+│    ✓ Edit Laporan (Update)                                                   │
+│    ✓ Hapus Laporan (Delete)                                                  │
+│    ✓ Export PDF                                                              │
+│                                                                              │
+│ 5. INVENTORY MATERIAL                                                        │
+│    ✓ Data Barang (Items CRUD)                                                │
+│    ✓ Pengambilan Barang (Withdrawals CRUD)                                   │
+│    ✓ Laporan Inventory (Reports)                                             │
+│    ✓ Export Excel & PDF                                                      │
+│    ✓ Stock Management                                                        │
+│    ✓ Photo Upload                                                            │
+│                                                                              │
+│ 6. ADMIN FEATURES                                                            │
+│    ✓ Kelola Pengguna (Users CRUD)                                            │
+│    ✓ Kelola Lokasi Monitoring (Locations CRUD)                               │
+│    ✓ Kelola Lokasi Bulanan (Finance Locations CRUD)                          │
+│                                                                              │
+│ 7. SECURITY & AUTHORIZATION                                                  │
+│    ✓ Role-based Access Control                                               │
+│    ✓ CSRF Protection                                                         │
+│    ✓ Middleware Authentication                                                │
+│                                                                              │
+│ 8. UI/UX                                                                     │
+│    ✓ Responsive Design                                                       │
+│    ✓ Navigation Menu                                                         │
+│    ✓ Form Validation                                                         │
+│    ✓ Error Messages                                                          │
+│    ✓ Success Messages                                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+TEST ENVIRONMENT:
+- Laravel Version: 10.50.3
+- PHP Version: 8.1.10
+- Database: MySQL
+- Browser: Chrome/Edge
+- OS: Windows 11
+
+═══════════════════════════════════════════════════════════════════════════════
+🔬 TESTING EXECUTION PLAN
+═══════════════════════════════════════════════════════════════════════════════
+
+PHASE 1: PRE-FLIGHT CHECKS
+───────────────────────────────────────────────────────────────────────────────
+[ ] Check database connection
+[ ] Check migrations status
+[ ] Check seeders data
+[ ] Check routes registration
+[ ] Check controllers syntax
+[ ] Check models loading
+[ ] Check views syntax
+
+PHASE 2: AUTHENTICATION TESTING
+───────────────────────────────────────────────────────────────────────────────
+[ ] Test 2.1: Access login page
+[ ] Test 2.2: Login with invalid credentials
+[ ] Test 2.3: Login as Admin (admin@sarpras.com)
+[ ] Test 2.4: Verify admin dashboard access
+[ ] Test 2.5: Logout admin
+[ ] Test 2.6: Login as Petugas (petugas@sarpras.com)
+[ ] Test 2.7: Verify petugas dashboard access
+[ ] Test 2.8: Test session persistence
+[ ] Test 2.9: Test remember me
+
+PHASE 3: ADMIN ROLE TESTING
+───────────────────────────────────────────────────────────────────────────────
+[ ] Test 3.1: Dashboard statistics (GWT + Inventory)
+[ ] Test 3.2: View monitoring histori
+[ ] Test 3.3: View laporan bulanan
+[ ] Test 3.4: Export PDF laporan
+[ ] Test 3.5: View inventory items
+[ ] Test 3.6: View withdrawals
+[ ] Test 3.7: View reports
+[ ] Test 3.8: Kelola pengguna (Create/Edit/Delete)
+[ ] Test 3.9: Kelola lokasi monitoring
+[ ] Test 3.10: Kelola lokasi bulanan
+
+PHASE 4: PETUGAS ROLE TESTING
+───────────────────────────────────────────────────────────────────────────────
+[ ] Test 4.1: Input monitoring harian (Create)
+[ ] Test 4.2: Upload foto monitoring
+[ ] Test 4.3: Edit monitoring (own data)
+[ ] Test 4.4: Delete monitoring (own data)
+[ ] Test 4.5: Input laporan bulanan
+[ ] Test 4.6: View riwayat bulanan (own data)
+[ ] Test 4.7: Edit laporan bulanan (own data)
+[ ] Test 4.8: Create pengambilan barang
+[ ] Test 4.9: View data barang
+[ ] Test 4.10: Cannot access admin features
+
+PHASE 5: INVENTORY TESTING
+───────────────────────────────────────────────────────────────────────────────
+[ ] Test 5.1: Create new item
+[ ] Test 5.2: Upload item photo
+[ ] Test 5.3: Edit item (add stock)
+[ ] Test 5.4: View item detail
+[ ] Test 5.5: Delete item
+[ ] Test 5.6: Create withdrawal (single item)
+[ ] Test 5.7: Create withdrawal (multiple items)
+[ ] Test 5.8: Stock deduction after withdrawal
+[ ] Test 5.9: View withdrawal detail
+[ ] Test 5.10: Export reports (Excel + PDF)
+[ ] Test 5.11: Low stock alert
+[ ] Test 5.12: Min stock validation
+
+PHASE 6: INTEGRATION TESTING
+───────────────────────────────────────────────────────────────────────────────
+[ ] Test 6.1: Dashboard displays all sections
+[ ] Test 6.2: Navigation between modules
+[ ] Test 6.3: Search functionality
+[ ] Test 6.4: Filter functionality
+[ ] Test 6.5: Pagination
+[ ] Test 6.6: Sorting
+
+PHASE 7: ERROR HANDLING
+───────────────────────────────────────────────────────────────────────────────
+[ ] Test 7.1: 404 error page
+[ ] Test 7.2: Form validation errors
+[ ] Test 7.3: Database errors
+[ ] Test 7.4: File upload errors
+[ ] Test 7.5: Authorization errors
+
+PHASE 8: PERFORMANCE & SECURITY
+───────────────────────────────────────────────────────────────────────────────
+[ ] Test 8.1: Page load time
+[ ] Test 8.2: Query optimization
+[ ] Test 8.3: N+1 query check
+[ ] Test 8.4: CSRF token validation
+[ ] Test 8.5: SQL injection protection
+[ ] Test 8.6: XSS protection
+
+═══════════════════════════════════════════════════════════════════════════════
+📊 TESTING PROGRESS
+═══════════════════════════════════════════════════════════════════════════════
+
+Status: 🟡 IN PROGRESS
+Start Time: 2026-10-09 14:48 WIB
+End Time: -
+
+Total Tests: ~80 tests
+Completed: 0
+Passed: 0
+Failed: 0
+Skipped: 0
+
+═══════════════════════════════════════════════════════════════════════════════
+🐛 BUG TRACKING LIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Format untuk setiap bug yang ditemukan:
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ BUG #XX: [Judul Bug]                                                         │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Severity: [CRITICAL / HIGH / MEDIUM / LOW]                                   │
+│ Module: [Module Name]                                                        │
+│ Found By: [Test Number]                                                      │
+│                                                                              │
+│ Description:                                                                 │
+│ [Deskripsi bug]                                                              │
+│                                                                              │
+│ Steps to Reproduce:                                                          │
+│ 1. [Step 1]                                                                  │
+│ 2. [Step 2]                                                                  │
+│ 3. [Step 3]                                                                  │
+│                                                                              │
+│ Expected Result:                                                             │
+│ [Hasil yang diharapkan]                                                      │
+│                                                                              │
+│ Actual Result:                                                               │
+│ [Hasil yang terjadi]                                                         │
+│                                                                              │
+│ Root Cause:                                                                  │
+│ [Penyebab masalah]                                                           │
+│                                                                              │
+│ Suggested Fix:                                                               │
+│ [Solusi yang disarankan]                                                     │
+│                                                                              │
+│ Status: [FOUND / FIXED / WONTFIX / DEFERRED]                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+BUGS AKAN DICATAT DI SINI SAAT TESTING BERLANGSUNG...
+
+═══════════════════════════════════════════════════════════════════════════════

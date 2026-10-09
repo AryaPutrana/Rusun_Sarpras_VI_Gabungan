@@ -51,7 +51,7 @@ class ItemController extends Controller
         $validated = $request->validate([
             'item_code' => 'required|unique:items,item_code|max:50',
             'name' => 'required|max:255',
-            'photo' => ['required', 'file', new ValidImage(), 'max:5120'],
+            'photo' => ['nullable', 'file', new ValidImage(), 'max:5120'],
             'unit_price' => ['required', 'numeric', 'min:0', 'max:'.Item::MAX_UNIT_PRICE],
             'stock' => ['required', 'integer', 'min:0', 'max:'.Item::MAX_STOCK],
             'min_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_STOCK],
@@ -68,17 +68,21 @@ class ItemController extends Controller
         $validated['description'] = $validated['description'] ?? null;
 
         $photo = $request->file('photo');
-        $filename = Str::uuid().'.'.$photo->extension();
+        $filename = $photo ? Str::uuid().'.'.$photo->extension() : null;
 
         try {
             // Simpan DB + file dalam satu transaksi; file dibersihkan bila simpan gagal
             DB::transaction(function () use ($validated, $photo, $filename) {
                 $validated['photo'] = $filename;
                 Item::create($validated);
-                $photo->storeAs('public/items', $filename);
+                if ($photo && $filename) {
+                    $photo->storeAs('public/items', $filename);
+                }
             });
         } catch (Throwable $e) {
-            Storage::delete('public/items/'.$filename);
+            if ($filename) {
+                Storage::delete('public/items/'.$filename);
+            }
             throw $e;
         }
 
@@ -123,7 +127,7 @@ class ItemController extends Controller
             'description' => 'nullable|string|max:60000',
             'add_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_ADD_STOCK],
             'subtract_stock' => ['nullable', 'integer', 'min:0', 'max:'.$item->stock],
-            'subtract_reason' => ['required_if:subtract_stock,>0', 'nullable', 'string', 'max:255'],
+            'subtract_reason' => ['nullable', 'required_with:subtract_stock', 'string', 'max:255'],
         ], [
             'photo.max' => 'Ukuran foto maksimal 5MB.',
             'unit_price.max' => 'Harga satuan maksimal Rp 1.000.000.000.',

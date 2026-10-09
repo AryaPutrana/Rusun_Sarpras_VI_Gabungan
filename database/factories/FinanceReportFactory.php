@@ -23,9 +23,9 @@ class FinanceReportFactory extends Factory
             'location_id' => FinanceLocation::factory(),
             'tanggal' => fake()->date(),
             'kondisi' => fake()->randomElement(['normal', 'debit_air_kurang', 'tekanan_pdam_kurang']),
-            'keterangan' => fake()->optional()->sentence(),
-            'foto' => null,
-            'foto_disk' => 'public',
+            'keterangan' => fake()->sentence(),
+            'foto' => 'finance/' . fake()->uuid() . '.jpg',
+            'foto_disk' => 'evidence',
         ];
     }
 }

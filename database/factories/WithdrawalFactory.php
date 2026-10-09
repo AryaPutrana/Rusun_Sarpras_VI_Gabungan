@@ -29,8 +29,9 @@ class WithdrawalFactory extends Factory
             'rusun_id' => Rusun::factory(),
             'taken_by' => $this->faker->name(),
             'taken_at' => $this->faker->dateTimeBetween('-30 days', 'now'),
-            'notes' => $this->faker->optional(0.3)->sentence(),
+            'description' => $this->faker->optional(0.3)->sentence(),
             'total_value' => 0, // Will be calculated when items are added
+            'total_quantity' => 0, // Will be calculated when items are added
         ];
     }
 }

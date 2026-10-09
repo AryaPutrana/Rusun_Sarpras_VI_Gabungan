@@ -57,7 +57,7 @@ class MonitoringLocationTest extends TestCase
     {
         $locationData = [
             'nama_lokasi' => 'Kolam Renang A',
-            'alamat' => 'Jl. Test No. 123',
+            'keterangan' => 'Lokasi untuk monitoring air',
             'status' => 'aktif',
         ];
 
@@ -68,7 +68,7 @@ class MonitoringLocationTest extends TestCase
 
         $this->assertDatabaseHas('monitoring_locations', [
             'nama_lokasi' => 'Kolam Renang A',
-            'alamat' => 'Jl. Test No. 123',
+            'keterangan' => 'Lokasi untuk monitoring air',
             'status' => 'aktif',
         ]);
     }
@@ -78,7 +78,7 @@ class MonitoringLocationTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->post(route('lokasi.store'), []);
 
-        $response->assertSessionHasErrors(['nama_lokasi', 'alamat', 'status']);
+        $response->assertSessionHasErrors(['nama_lokasi', 'status']);
     }
 
     /** @test */
@@ -86,7 +86,7 @@ class MonitoringLocationTest extends TestCase
     {
         $locationData = [
             'nama_lokasi' => 'Test Location',
-            'alamat' => 'Test Address',
+            'keterangan' => 'Test description',
             'status' => 'invalid_status',
         ];
 
@@ -113,13 +113,13 @@ class MonitoringLocationTest extends TestCase
     {
         $location = MonitoringLocation::factory()->create([
             'nama_lokasi' => 'Old Name',
-            'alamat' => 'Old Address',
+            'keterangan' => 'Old description',
             'status' => 'aktif',
         ]);
 
         $updateData = [
             'nama_lokasi' => 'Updated Name',
-            'alamat' => 'Updated Address',
+            'keterangan' => 'Updated description',
             'status' => 'nonaktif',
         ];
 
@@ -131,7 +131,7 @@ class MonitoringLocationTest extends TestCase
         $this->assertDatabaseHas('monitoring_locations', [
             'id' => $location->id,
             'nama_lokasi' => 'Updated Name',
-            'alamat' => 'Updated Address',
+            'keterangan' => 'Updated description',
             'status' => 'nonaktif',
         ]);
     }
@@ -143,11 +143,10 @@ class MonitoringLocationTest extends TestCase
 
         $response = $this->actingAs($this->admin)->put(route('lokasi.update', $location), [
             'nama_lokasi' => '',
-            'alamat' => '',
             'status' => '',
         ]);
 
-        $response->assertSessionHasErrors(['nama_lokasi', 'alamat', 'status']);
+        $response->assertSessionHasErrors(['nama_lokasi', 'status']);
     }
 
     /** @test */
@@ -170,7 +169,7 @@ class MonitoringLocationTest extends TestCase
         
         // Create water monitoring records for this location
         WaterMonitoring::factory()->create([
-            'monitoring_location_id' => $location->id,
+            'location_id' => $location->id,
             'user_id' => $this->petugas->id,
         ]);
 
@@ -187,7 +186,7 @@ class MonitoringLocationTest extends TestCase
     {
         $location = MonitoringLocation::factory()->create();
         WaterMonitoring::factory()->count(3)->create([
-            'monitoring_location_id' => $location->id,
+            'location_id' => $location->id,
             'user_id' => $this->petugas->id,
         ]);
 
@@ -206,7 +205,7 @@ class MonitoringLocationTest extends TestCase
     {
         $locationData = [
             'nama_lokasi' => 'Test Location',
-            'alamat' => 'Test Address',
+            'keterangan' => 'Test description',
             'status' => 'aktif',
         ];
 
@@ -222,7 +221,7 @@ class MonitoringLocationTest extends TestCase
 
         $response = $this->actingAs($this->petugas)->put(route('lokasi.update', $location), [
             'nama_lokasi' => 'Updated',
-            'alamat' => 'Updated',
+            'keterangan' => 'Updated',
             'status' => 'aktif',
         ]);
 

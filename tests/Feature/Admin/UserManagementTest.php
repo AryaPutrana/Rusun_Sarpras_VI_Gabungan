@@ -283,6 +283,9 @@ class UserManagementTest extends TestCase
     /** @test */
     public function cannot_delete_last_admin()
     {
+        // Delete any other admins that might exist, leaving only $this->admin
+        User::where('role', 'admin')->where('id', '!=', $this->admin->id)->delete();
+        
         // Only one admin exists ($this->admin)
         $this->assertEquals(1, User::where('role', 'admin')->count());
 
@@ -298,6 +301,9 @@ class UserManagementTest extends TestCase
     /** @test */
     public function can_delete_admin_when_multiple_admins_exist()
     {
+        // Delete any other admins that might exist, leaving only $this->admin
+        User::where('role', 'admin')->where('id', '!=', $this->admin->id)->delete();
+        
         $admin2 = User::factory()->create(['role' => 'admin']);
 
         $this->assertEquals(2, User::where('role', 'admin')->count());

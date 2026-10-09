@@ -57,7 +57,7 @@ class FinanceLocationTest extends TestCase
     {
         $locationData = [
             'nama_lokasi' => 'Kantor Cabang A',
-            'alamat' => 'Jl. Finance No. 456',
+            'keterangan' => 'Lokasi untuk laporan bulanan',
             'status' => 'aktif',
         ];
 
@@ -68,7 +68,7 @@ class FinanceLocationTest extends TestCase
 
         $this->assertDatabaseHas('finance_locations', [
             'nama_lokasi' => 'Kantor Cabang A',
-            'alamat' => 'Jl. Finance No. 456',
+            'keterangan' => 'Lokasi untuk laporan bulanan',
             'status' => 'aktif',
         ]);
     }
@@ -78,7 +78,7 @@ class FinanceLocationTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->post(route('lokasiBulanan.store'), []);
 
-        $response->assertSessionHasErrors(['nama_lokasi', 'alamat', 'status']);
+        $response->assertSessionHasErrors(['nama_lokasi', 'status']);
     }
 
     /** @test */
@@ -86,7 +86,7 @@ class FinanceLocationTest extends TestCase
     {
         $locationData = [
             'nama_lokasi' => 'Test Location',
-            'alamat' => 'Test Address',
+            'keterangan' => 'Test description',
             'status' => 'invalid_status',
         ];
 
@@ -113,13 +113,13 @@ class FinanceLocationTest extends TestCase
     {
         $location = FinanceLocation::factory()->create([
             'nama_lokasi' => 'Old Finance Name',
-            'alamat' => 'Old Finance Address',
+            'keterangan' => 'Old description',
             'status' => 'aktif',
         ]);
 
         $updateData = [
             'nama_lokasi' => 'Updated Finance Name',
-            'alamat' => 'Updated Finance Address',
+            'keterangan' => 'Updated description',
             'status' => 'nonaktif',
         ];
 
@@ -131,7 +131,7 @@ class FinanceLocationTest extends TestCase
         $this->assertDatabaseHas('finance_locations', [
             'id' => $location->id,
             'nama_lokasi' => 'Updated Finance Name',
-            'alamat' => 'Updated Finance Address',
+            'keterangan' => 'Updated description',
             'status' => 'nonaktif',
         ]);
     }
@@ -143,11 +143,10 @@ class FinanceLocationTest extends TestCase
 
         $response = $this->actingAs($this->admin)->put(route('lokasiBulanan.update', $location), [
             'nama_lokasi' => '',
-            'alamat' => '',
             'status' => '',
         ]);
 
-        $response->assertSessionHasErrors(['nama_lokasi', 'alamat', 'status']);
+        $response->assertSessionHasErrors(['nama_lokasi', 'status']);
     }
 
     /** @test */
@@ -170,7 +169,7 @@ class FinanceLocationTest extends TestCase
         
         // Create finance reports for this location
         FinanceReport::factory()->create([
-            'finance_location_id' => $location->id,
+            'location_id' => $location->id,
             'user_id' => $this->petugas->id,
         ]);
 
@@ -187,7 +186,7 @@ class FinanceLocationTest extends TestCase
     {
         $location = FinanceLocation::factory()->create();
         FinanceReport::factory()->count(5)->create([
-            'finance_location_id' => $location->id,
+            'location_id' => $location->id,
             'user_id' => $this->petugas->id,
         ]);
 
@@ -206,7 +205,7 @@ class FinanceLocationTest extends TestCase
     {
         $locationData = [
             'nama_lokasi' => 'Test Location',
-            'alamat' => 'Test Address',
+            'keterangan' => 'Test description',
             'status' => 'aktif',
         ];
 
@@ -222,7 +221,7 @@ class FinanceLocationTest extends TestCase
 
         $response = $this->actingAs($this->petugas)->put(route('lokasiBulanan.update', $location), [
             'nama_lokasi' => 'Updated',
-            'alamat' => 'Updated',
+            'keterangan' => 'Updated',
             'status' => 'aktif',
         ]);
 

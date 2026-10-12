@@ -234,9 +234,14 @@ class ReportController extends Controller
                 ->with('error', 'Tanggal akhir harus sama atau setelah tanggal awal.');
         }
 
+        // OPTIMIZATION: Limit PDF export to 1000 rows untuk mencegah memory overflow
+        // PDF dengan foto bisa sangat besar (1000 rows × 1MB foto = 1GB memory)
+        // Untuk data lebih besar, gunakan Excel export yang lebih efisien
+        $pdfLimit = 1000;
+        
         // Data detail per barang untuk PDF (tidak digrup)
         $details = $this->withdrawalDetailQuery($startDate, $endDate, $rusunId)
-            ->limit(5000)
+            ->limit($pdfLimit)
             ->get();
 
         // Grup berdasarkan withdrawal_id untuk rowspan logic di PDF
@@ -255,7 +260,7 @@ class ReportController extends Controller
         $totalQuantity = $totals['totalQuantity'];
         $totalValue = $totals['totalValue'];
 
-        $detailLimitReached = $details->count() >= 5000;
+        $detailLimitReached = $details->count() >= $pdfLimit;
 
         $rusunName = 'Semua Rusun';
         if ($rusunId && $rusunId != 'all') {

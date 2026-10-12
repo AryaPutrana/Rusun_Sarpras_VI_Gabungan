@@ -386,6 +386,16 @@ class WithdrawalController extends Controller
                         $item = Item::lockForUpdate()->find($oldItem->item_id);
                         if ($item) {
                             $item->increment('stock', $oldItem->quantity);
+                        } else {
+                            // Item sudah dihapus dari sistem, log untuk audit trail
+                            // Stok tidak bisa dikembalikan karena item tidak ada
+                            \Log::warning('Withdrawal edit: Cannot return stock - Item deleted', [
+                                'withdrawal_id' => $withdrawal->id,
+                                'item_id' => $oldItem->item_id,
+                                'quantity_not_returned' => $oldItem->quantity,
+                                'edited_by' => auth()->id(),
+                                'timestamp' => now()->toDateTimeString(),
+                            ]);
                         }
                     }
                 }

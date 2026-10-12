@@ -249,8 +249,14 @@ class DashboardController extends Controller
         $sampai = $this->parseDate($request->string('sampai')->toString());
 
         if ($dari && $sampai && $dari <= $sampai) {
+            $originalSampai = $sampai;
             $sampai = min($sampai, $today);
             $dari = min($dari, $sampai);
+
+            // User feedback jika tanggal disesuaikan
+            if ($originalSampai > $today) {
+                session()->flash('info', 'Tanggal akhir disesuaikan ke hari ini karena tidak boleh tanggal masa depan.');
+            }
 
             if ($dari <= $sampai) {
                 return [$dari, $sampai];

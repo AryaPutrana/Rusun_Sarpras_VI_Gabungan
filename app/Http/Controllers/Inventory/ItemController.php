@@ -235,21 +235,26 @@ class ItemController extends Controller
                 ->with('error', 'Barang tidak dapat dihapus karena memiliki riwayat pengambilan.');
         }
 
-        // Hapus foto hanya jika tidak dipakai item lain (mis. default.jpg dipakai banyak barang)
-        if ($item->photo) {
-            $stillUsed = Item::where('photo', $item->photo)
-                ->where('id', '!=', $item->id)
-                ->exists();
-            if (! $stillUsed) {
-                Storage::delete('public/items/'.$item->photo);
+        $photoPath = $item->photo;
 
-                // Invalidate cache thumbnail
-                $cacheKey = 'item-thumb:'.sha1($item->photo.'|44|v1');
-                Cache::forget($cacheKey);
+        // Wrap dalam transaction untuk data integrity
+        DB::transaction(function () use ($item, $photoPath) {
+            $item->delete();
+
+            // Hapus foto SETELAH delete berhasil, untuk hindari orphan files
+            if ($photoPath) {
+                $stillUsed = Item::where('photo', $photoPath)
+                    ->where('id', '!=', $item->id)
+                    ->exists();
+                if (! $stillUsed) {
+                    Storage::delete('public/items/'.$photoPath);
+
+                    // Invalidate cache thumbnail
+                    $cacheKey = 'item-thumb:'.sha1($photoPath.'|44|v1');
+                    Cache::forget($cacheKey);
+                }
             }
-        }
-
-        $item->delete();
+        });
 
         return redirect()->route('inventory.items.index')
             ->with('success', 'Barang berhasil dihapus.');

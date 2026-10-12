@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean & Elegant UI - Sistem Sarpras UPRS VI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* ============================================
+           CLEAN & MINIMAL DESIGN SYSTEM
+           ============================================ */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Minimal Color Palette - Soft & Professional */
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-lighter: #dbeafe;
+            
+            --success: #10b981;
+            --success-light: #d1fae5;
+            
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border: #e5e7eb;
+            
+            /* Spacing - Consistent 8px grid */
+            --space-1: 0.5rem;
+            --space-2: 1rem;
+            --space-3: 1.5rem;
+            --space-4: 2rem;
+            
+            /* Clean Shadows */
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: var(--space-3);
+        }
+        
+        /* ============================================
+           TYPOGRAPHY - Clean & Readable
+           ============================================ */
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+        
+        h1 { font-size: 1.875rem; letter-spacing: -0.025em; }
+        h2 { font-size: 1.5rem; letter-spacing: -0.025em; }
+        h3 { font-size: 1.25rem; }
+        h4 { font-size: 1.125rem; }
+        
+        p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+        
+        /* ============================================
+           CLEAN CARD DESIGN
+           ============================================ */
+        
+        .card-clean {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: var(--space-3);
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.2s;
+        }
+        
+        .card-clean:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .card-clean-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+            padding-bottom: var(--space-2);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .card-clean-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        /* ============================================
+           MINIMAL STATISTICS
+           ============================================ */
+        
+        .stat-minimal {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: var(--space-3);
+            transition: all 0.2s;
+        }
+        
+        .stat-minimal:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stat-minimal-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--space-1);
+            line-height: 1;
+        }
+        
+        .stat-minimal-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+        
+        .stat-minimal-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-2);
+            font-size: 1.25rem;
+        }
+        
+        .stat-minimal-icon.primary { background: var(--primary-lighter); color: var(--primary); }
+        .stat-minimal-icon.success { background: var(--success-light); color: var(--success); }
+        .stat-minimal-icon.warning { background: var(--warning-light); color: var(--warning); }
+        .stat-minimal-icon.danger { background: var(--danger-light); color: var(--danger); }
+        
+        /* ============================================
+           CLEAN STATUS BADGE
+           ============================================ */
+        
+        .badge-clean {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            border: 1px solid;
+        }
+        
+        .badge-clean.success {
+            background: var(--success-light);
+            color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .badge-clean.warning {
+            background: var(--warning-light);
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+        
+        .badge-clean.danger {
+            background: var(--danger-light);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        /* ============================================
+           MINIMAL TABLE
+           ============================================ */
+        
+        .table-minimal {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-primary);
+        }
+        
+        .table-minimal thead th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-align: left;
+            padding: var(--space-2);
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .table-minimal tbody td {
+            padding: var(--space-2);
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        
+        .table-minimal tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .table-minimal tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        /* ============================================
+           CLEAN BUTTONS
+           ============================================ */
+        
+        .btn-clean {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        .btn-clean-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-clean-primary:hover {
+            background: var(--primary-light);
+            border-color: var(--primary-light);
+            color: white;
+        }
+        
+        .btn-clean-outline {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text-secondary);
+        }
+        
+        .btn-clean-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-lighter);
+        }
+        
+        .btn-clean-sm {
+            padding: 0.375rem 0.875rem;
+            font-size: 0.8125rem;
+        }
+        
+        /* ============================================
+           SIMPLE NAVBAR
+           ============================================ */
+        
+        .navbar-minimal {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            padding: var(--space-2) 0;
+            margin: calc(var(--space-3) * -1) calc(var(--space-3) * -1) var(--space-4);
+            padding-left: var(--space-3);
+            padding-right: var(--space-3);
+        }
+        
+        .navbar-brand {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            gap: var(--space-3);
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .nav-link.active {
+            color: var(--primary);
+        }
+        
+        /* ============================================
+           GRID LAYOUT
+           ============================================ */
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-3);
+        }
+        
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-3);
+        }
+        
+        /* ============================================
+           UTILITIES
+           ============================================ */
+        
+        .text-muted { color: var(--text-muted) !important; }
+        .text-secondary { color: var(--text-secondary) !important; }
+        .fw-semibold { font-weight: 600; }
+        .mb-0 { margin-bottom: 0 !important; }
+        .mb-1 { margin-bottom: var(--space-1); }
+        .mb-2 { margin-bottom: var(--space-2); }
+        .mb-3 { margin-bottom: var(--space-3); }
+        .mb-4 { margin-bottom: var(--space-4); }
+        
+        .d-flex { display: flex; }
+        .align-items-center { align-items: center; }
+        .justify-content-between { justify-content: space-between; }
+        .gap-2 { gap: var(--space-2); }
+        
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        
+        @media (max-width: 768px) {
+            body {
+                padding: var(--space-2);
+            }
+            
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar-minimal {
+                margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) var(--space-3);
+                padding: var(--space-2);
+            }
+            
+            h1 { font-size: 1.5rem; }
+        }
+        
+        @media (max-width: 480px) {
+            .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Simple Navbar -->
+    <nav class="navbar-minimal">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="#" class="navbar-brand">Sistem Sarpras</a>
+            <ul class="navbar-nav">
+                <li><a href="#" class="nav-link active">Dashboard</a></li>
+                <li><a href="#" class="nav-link">Monitoring</a></li>
+                <li><a href="#" class="nav-link">Laporan</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div class="container-fluid" style="max-width: 1400px; margin: 0 auto;">
+        
+        <!-- Page Header -->
+        <div class="mb-4">
+            <h1 class="mb-1">Dashboard</h1>
+            <p class="text-secondary mb-0">Sistem Monitoring Sarpras UPRS VI</p>
+        </div>
+        
+        <!-- Statistics Grid -->
+        <div class="grid-4 mb-4">
+            <div class="stat-minimal">
+                <div class="stat-minimal-icon primary">
+                    <i class="bi bi-water"></i>
+                </div>
+                <div class="stat-minimal-value">248</div>
+                <div class="stat-minimal-label">Total Monitoring</div>
+            </div>
+            
+            <div class="stat-minimal">
+                <div class="stat-minimal-icon success">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-minimal-value">234</div>
+                <div class="stat-minimal-label">Status Normal</div>
+            </div>
+            
+            <div class="stat-minimal">
+                <div class="stat-minimal-icon warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-minimal-value">14</div>
+                <div class="stat-minimal-label">Perlu Perhatian</div>
+            </div>
+            
+            <div class="stat-minimal">
+                <div class="stat-minimal-icon danger">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="stat-minimal-value">96%</div>
+                <div class="stat-minimal-label">Coverage Rate</div>
+            </div>
+        </div>
+        
+        <!-- Main Content Grid -->
+        <div class="grid-2 mb-4">
+            
+            <!-- Chart Card -->
+            <div class="card-clean">
+                <div class="card-clean-header">
+                    <h3 class="card-clean-title">Trend 7 Hari</h3>
+                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                        <i class="bi bi-download"></i>
+                        Export
+                    </button>
+                </div>
+                <div style="height: 250px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border-radius: 6px;">
+                    <div style="text-align: center;">
+                        <i class="bi bi-graph-up" style="font-size: 3rem; color: var(--text-muted);"></i>
+                        <p class="text-muted mt-2 mb-0" style="font-size: 0.875rem;">Chart visualization</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card-clean">
+                <div class="card-clean-header">
+                    <h3 class="card-clean-title">Aktivitas Terkini</h3>
+                    <a href="#" class="text-secondary" style="font-size: 0.875rem; text-decoration: none;">Lihat Semua</a>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold" style="font-size: 0.875rem;">Lokasi A - Pagi</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">5 menit lalu</div>
+                        </div>
+                        <span class="badge-clean success">Normal</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold" style="font-size: 0.875rem;">Lokasi B - Siang</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">12 menit lalu</div>
+                        </div>
+                        <span class="badge-clean warning">Perhatian</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold" style="font-size: 0.875rem;">Lokasi C - Sore</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">25 menit lalu</div>
+                        </div>
+                        <span class="badge-clean success">Normal</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold" style="font-size: 0.875rem;">Lokasi D - Malam</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">1 jam lalu</div>
+                        </div>
+                        <span class="badge-clean success">Normal</span>
+                    </div>
+                </div>
+                
+                <button class="btn-clean btn-clean-primary" style="width: 100%; margin-top: var(--space-3);">
+                    <i class="bi bi-plus-circle"></i>
+                    Input Monitoring Baru
+                </button>
+            </div>
+            
+        </div>
+        
+        <!-- Table Card -->
+        <div class="card-clean">
+            <div class="card-clean-header">
+                <h3 class="card-clean-title">Data Monitoring</h3>
+                <div class="d-flex gap-2">
+                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                        <i class="bi bi-funnel"></i>
+                        Filter
+                    </button>
+                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                        <i class="bi bi-printer"></i>
+                        Print
+                    </button>
+                </div>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="table-minimal">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th>Lokasi</th>
+                            <th>Waktu</th>
+                            <th>Status</th>
+                            <th>Petugas</th>
+                            <th style="width: 120px; text-align: center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-semibold">1</td>
+                            <td>
+                                <div class="fw-semibold">Lokasi Monitoring A</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Sesi Pagi</div>
+                            </td>
+                            <td>12 Okt 2026, 08:30</td>
+                            <td><span class="badge-clean success">Normal</span></td>
+                            <td>Ahmad Fauzi</td>
+                            <td style="text-align: center;">
+                                <div class="d-flex gap-2" style="justify-content: center;">
+                                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">2</td>
+                            <td>
+                                <div class="fw-semibold">Lokasi Monitoring B</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Sesi Siang</div>
+                            </td>
+                            <td>12 Okt 2026, 12:15</td>
+                            <td><span class="badge-clean warning">Perhatian</span></td>
+                            <td>Siti Nurhaliza</td>
+                            <td style="text-align: center;">
+                                <div class="d-flex gap-2" style="justify-content: center;">
+                                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">3</td>
+                            <td>
+                                <div class="fw-semibold">Lokasi Monitoring C</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Sesi Sore</div>
+                            </td>
+                            <td>12 Okt 2026, 16:45</td>
+                            <td><span class="badge-clean success">Normal</span></td>
+                            <td>Budi Santoso</td>
+                            <td style="text-align: center;">
+                                <div class="d-flex gap-2" style="justify-content: center;">
+                                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn-clean btn-clean-outline btn-clean-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: var(--space-4); padding: var(--space-2); color: var(--text-muted); font-size: 0.8125rem;">
+            Clean & Elegant UI - Sistem Sarpras UPRS VI 2026
+        </div>
+        
+    </div>
+    
+</body>
+</html>

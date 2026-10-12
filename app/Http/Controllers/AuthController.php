@@ -134,7 +134,7 @@ class AuthController extends Controller
     {
         $seconds = RateLimiter::availableIn($this->throttleKey($request));
 
-        $waktu = $seconds >= 60 ? (ceil($seconds / 60).' menit') : ($seconds.' detik');
+        $waktu = $seconds >= 60 ? (ceil($seconds / 60).' menit') : (ceil($seconds).' detik');
 
         return back()->withErrors([
             'email' => "Terlalu banyak percobaan login. Silakan coba lagi dalam {$waktu}.",

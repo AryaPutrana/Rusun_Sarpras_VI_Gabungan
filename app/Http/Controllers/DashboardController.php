@@ -240,7 +240,7 @@ class DashboardController extends Controller
         if (array_key_exists($preset, self::DATE_RANGE_PRESETS)) {
             return match ($preset) {
                 '7hari' => [now()->subDays(6)->toDateString(), $today],
-                'bulan_ini' => [now()->startOfMonth()->toDateString(), $today],
+                'bulan_ini' => [Carbon::now()->startOfMonth()->toDateString(), $today],
                 default => [$today, $today],
             };
         }

@@ -50,8 +50,12 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // SECURITY FIX: Validate role BEFORE authentication to prevent
-        // invalid role users from receiving a session momentarily
+        // SECURITY: Validate role BEFORE authentication to prevent
+        // invalid role users from receiving a session momentarily.
+        // 
+        // Note: Ini memang 2 query (check user + Auth::attempt), tapi ini trade-off
+        // yang acceptable untuk keamanan. Alternative seperti custom guard atau
+        // whereIn di credentials lebih kompleks dan sulit maintain.
         $user = \App\Models\User::where('email', $credentials['email'])->first();
         
         if ($user && ! in_array($user->role, ['admin', 'petugas'])) {

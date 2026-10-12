@@ -134,7 +134,7 @@ class ItemController extends Controller
             'min_stock.max' => 'Batas minimum stok terlalu besar.',
             'add_stock.max' => 'Penambahan stok maksimal 1.000.000 Unit per kali.',
             'subtract_stock.max' => 'Pengurangan stok tidak boleh melebihi stok saat ini ('.$item->stock.' unit).',
-            'subtract_reason.required_if' => 'Alasan pengurangan stok wajib diisi.',
+            'subtract_reason.required_with' => 'Alasan pengurangan stok wajib diisi.',
         ]);
 
         $validated['min_stock'] = $validated['min_stock'] ?? 0;

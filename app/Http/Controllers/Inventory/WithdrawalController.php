@@ -138,7 +138,6 @@ class WithdrawalController extends Controller
             'items.max' => 'Maksimal '.Withdrawal::MAX_ITEMS_PER_TRANSACTION.' jenis barang per transaksi.',
             'items.*.item_id.distinct' => 'Barang yang sama tidak boleh dipilih lebih dari sekali.',
             'items.*.quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
-            'quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
         ]);
 
         // Urutkan id barang sebelum locking: tanpa ini dua transaksi yang
@@ -299,7 +298,6 @@ class WithdrawalController extends Controller
             'items.max' => 'Maksimal '.Withdrawal::MAX_ITEMS_PER_TRANSACTION.' jenis barang per transaksi.',
             'items.*.item_id.distinct' => 'Barang yang sama tidak boleh dipilih lebih dari sekali.',
             'items.*.quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
-            'quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
         ]);
 
         // Urutkan id barang untuk mencegah deadlock

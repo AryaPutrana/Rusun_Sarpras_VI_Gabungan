@@ -74,7 +74,7 @@ class Item extends Model
      * akan hilang. Karena itu fotonya dibaca dari storage, dikecilkan, lalu
      * ditanam langsung sebagai base64.
      *
-     * Dismallkan karena ukuran foto asli sangat varies (1,9 KB sampai
+     * Dikecilkan karena ukuran foto asli sangat bervariasi (1,9 KB sampai
      * 1,5 MB). Tanpa thumbnail, satu baris saja bisa membengkakkan PDF.
      *
      * Mengembalikan null bila foto tidak ada atau tidak bisa diproses, supaya

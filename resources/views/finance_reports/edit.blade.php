@@ -85,8 +85,8 @@
                         <div class="mb-3">
                             <label class="form-label">Foto Saat Ini</label>
                             <div>
-                                <a href="{{ route('foto.finance', $report) }}" target="_blank" rel="noopener">
-                                    <img src="{{ route('foto.finance', $report) }}" alt="Foto" class="img-thumbnail" style="max-height:160px">
+                                <a href="{{ $report->fotoUrl('foto.finance') }}" target="_blank" rel="noopener">
+                                    <img src="{{ $report->fotoUrl('foto.finance') }}" alt="Foto" class="img-thumbnail" style="max-height:160px">
                                 </a>
                             </div>
                         </div>

@@ -1,0 +1,518 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║           BUG REPORT: FOTO MONITORING TIDAK BISA DI-UPDATE               ║
+║                     Generated: 2026-10-13 15:22                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+MASALAH YANG DILAPORKAN:
+═══════════════════════════════════════════════════════════════════════════
+User melaporkan: "Update foto pada bagian histori monitoring tidak bisa 
+ke update malah foto yang sama ajaa"
+
+
+ANALISIS KODE - HASIL INVESTIGASI:
+═══════════════════════════════════════════════════════════════════════════
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ 1. CONTROLLER LOGIC - MonitoringController::update()                │
+└──────────────────────────────────────────────────────────────────────┘
+
+File: app/Http/Controllers/MonitoringController.php
+Method: update() - Line 163-224
+
+KODE YANG DIPERIKSA:
+────────────────────
+
+Line 184-199: Photo Upload Logic
+```php
+if ($request->hasFile('foto')) {
+    $fotoBaru = PhotoStorage::storeUploaded(
+        $request->file('foto'), 
+        PhotoStorage::DIR_MONITORING
+    );
+    
+    if ($fotoBaru === null) {
+        return back()
+            ->withInput()
+            ->with('error', PhotoStorage::MESSAGE_GAGAL_SIMPAN);
+    }
+    
+    $data['foto'] = $fotoBaru;
+    $data['foto_disk'] = PhotoStorage::EVIDENCE;
+}
+```
+
+✓ LOGIC: CORRECT
+  - hasFile('foto') check: Present
+  - PhotoStorage::storeUploaded(): Proper error handling
+  - Sets both 'foto' and 'foto_disk' fields
+  - Returns error message if upload fails
+
+Line 201-209: Database Update with Transaction Safety
+```php
+try {
+    $monitoring->update($data);
+} catch (Throwable $exception) {
+    if ($fotoBaru !== null) {
+        PhotoStorage::deleteQuietly(
+            Storage::disk(PhotoStorage::EVIDENCE), 
+            $fotoBaru
+        );
+    }
+    throw $exception;
+}
+```
+
+✓ LOGIC: CORRECT
+  - Transaction safety via try-catch
+  - Cleanup new photo if update fails
+  - Proper exception re-throw
+
+Line 211-213: Old Photo Cleanup
+```php
+if ($fotoBaru !== null && $fotoLama !== null && $fotoLama !== $fotoBaru) {
+    PhotoStorage::deleteQuietly(Storage::disk($diskLama), $fotoLama);
+}
+```
+
+✓ LOGIC: CORRECT
+  - Only deletes old photo after successful update
+  - Checks all conditions properly
+
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ 2. FORM VIEW - resources/views/monitoring/edit.blade.php            │
+└──────────────────────────────────────────────────────────────────────┘
+
+Line 15: Form Attributes
+```blade
+<form method="POST" 
+      action="{{ route('monitoring.update', $monitoring) }}" 
+      enctype="multipart/form-data">
+```
+
+✓ FORM: CORRECT
+  - enctype="multipart/form-data" present
+  - @method('PUT') present (line 17)
+  - Action route correct
+
+Line 84-90: Photo Input Field
+```blade
+<input type="file" 
+       id="foto" 
+       name="foto" 
+       accept="image/jpeg,image/png"
+       class="form-control @error('foto') is-invalid @enderror">
+```
+
+✓ INPUT: CORRECT
+  - name="foto" matches controller
+  - accept attribute limits file types
+  - Error handling present
+
+Line 96-105: Current Photo Display
+```blade
+@if ($monitoring->fotoExists())
+    <div class="mb-3">
+        <label class="form-label">Foto Saat Ini</label>
+        <div>
+            <a href="{{ route('foto.monitoring', $monitoring) }}" 
+               target="_blank" rel="noopener">
+                <img src="{{ route('foto.monitoring', $monitoring) }}" 
+                     alt="Foto pemeriksaan" 
+                     class="img-thumbnail" 
+                     style="max-height:160px">
+            </a>
+        </div>
+    </div>
+@endif
+```
+
+✓ DISPLAY: CORRECT
+  - Checks fotoExists() before displaying
+  - Uses proper route for photo URL
+
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ 3. VALIDATION - UpdateWaterMonitoringRequest                        │
+└──────────────────────────────────────────────────────────────────────┘
+
+File: app/Http/Requests/UpdateWaterMonitoringRequest.php
+Line 34: Photo Validation Rule
+
+```php
+'foto' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
+```
+
+✓ VALIDATION: CORRECT
+  - 'sometimes' = only validate if present
+  - 'nullable' = allows empty field
+  - 'image' = must be image file
+  - 'mimes:jpeg,jpg,png' = allowed formats
+  - 'max:5120' = 5MB limit
+
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ 4. PHOTO STORAGE - PhotoStorage::storeUploaded()                    │
+└──────────────────────────────────────────────────────────────────────┘
+
+File: app/Support/PhotoStorage.php
+Line 129-144: Store Logic
+
+```php
+public static function storeUploaded(?UploadedFile $file, string $directory): ?string
+{
+    if ($file === null) {
+        return null;
+    }
+    
+    try {
+        $path = $file->store($directory, self::EVIDENCE);
+    } catch (Throwable $exception) {
+        report($exception);
+        return null;
+    }
+    
+    return is_string($path) ? $path : null;
+}
+```
+
+✓ STORAGE: CORRECT
+  - Null check for file
+  - Exception handling with logging
+  - Returns null on failure (handled by controller)
+  - Stores to 'evidence' disk (private storage)
+
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ 5. MODEL - WaterMonitoring + HasEvidencePhoto Trait                 │
+└──────────────────────────────────────────────────────────────────────┘
+
+File: app/Models/WaterMonitoring.php
+Line 46-56: Fillable Fields
+
+```php
+protected $fillable = [
+    'user_id',
+    'location_id',
+    'tanggal',
+    'sesi',
+    'waktu',
+    'kondisi',
+    'keterangan',
+    'foto',        // ✓ Present
+    'foto_disk',   // ✓ Present
+];
+```
+
+✓ FILLABLE: CORRECT
+  - 'foto' field fillable
+  - 'foto_disk' field fillable
+
+File: app/Models/Concerns/HasEvidencePhoto.php
+Line 40-49: fotoExists() Method
+
+```php
+public function fotoExists(): bool
+{
+    $path = $this->fotoPath();
+    
+    if ($path === null) {
+        return false;
+    }
+    
+    return PhotoStorage::existsQuietly($this->fotoDisk(), $path);
+}
+```
+
+✓ TRAIT: CORRECT
+  - Safe path validation
+  - Quiet check (no exception throw)
+  - Uses correct disk based on foto_disk field
+
+
+═══════════════════════════════════════════════════════════════════════
+KESIMPULAN ANALISIS KODE
+═══════════════════════════════════════════════════════════════════════
+
+✓ Controller logic: CORRECT
+✓ Form configuration: CORRECT
+✓ Validation rules: CORRECT
+✓ Photo storage: CORRECT
+✓ Model fillable: CORRECT
+✓ Trait methods: CORRECT
+
+KODE TIDAK ADA BUG - Semua komponen sudah benar!
+
+
+═══════════════════════════════════════════════════════════════════════
+KEMUNGKINAN PENYEBAB MASALAH (BUKAN DI KODE)
+═══════════════════════════════════════════════════════════════════════
+
+Karena kode sudah benar, masalah kemungkinan besar di:
+
+1. CACHE BROWSER
+   ─────────────
+   Symptom: Foto lama masih tampil padahal sudah di-update
+   Cause: Browser cache foto dengan URL yang sama
+   
+   URL foto monitoring menggunakan route:
+   route('foto.monitoring', $monitoring)
+   
+   Jika URL SAMA untuk foto lama dan baru, browser akan cache.
+   
+   SOLUSI: Hard refresh browser (Ctrl+F5)
+
+2. FOTO TIDAK BENAR-BENAR DI-UPLOAD
+   ─────────────────────────────────
+   Symptom: Form submit tapi foto tetap sama
+   Cause: User tidak memilih file baru
+   
+   Pada form edit, field foto KOSONG = pertahankan foto lama.
+   User harus AKTIF klik "Choose File" dan pilih foto baru.
+   
+   VERIFIKASI: Cek apakah user benar-benar upload foto baru?
+
+3. JAVASCRIPT RESET FORM
+   ─────────────────────
+   Symptom: File input ter-reset sebelum submit
+   Cause: JavaScript menghapus file selection
+   
+   VERIFIKASI: Cek browser console untuk JavaScript errors
+
+4. PERMISSION STORAGE
+   ───────────────────
+   Symptom: Upload gagal tapi tidak ada error message
+   Cause: Storage directory tidak writable
+   
+   VERIFIKASI:
+   - storage/app/evidence/monitoring/ writable?
+   - Disk 'evidence' configured di config/filesystems.php?
+
+5. FILE SIZE > 5MB
+   ───────────────
+   Symptom: File tidak ter-upload
+   Cause: File terlalu besar
+   
+   VERIFIKASI: Cek ukuran file yang di-upload
+
+6. VALIDATION ERROR SILENT
+   ───────────────────────
+   Symptom: Form submit tapi tidak ada perubahan
+   Cause: Validation gagal tapi error tidak tampil
+   
+   VERIFIKASI: Cek @error('foto') di form
+
+
+═══════════════════════════════════════════════════════════════════════
+DIAGNOSTIC STEPS - UNTUK USER
+═══════════════════════════════════════════════════════════════════════
+
+STEP 1: Buka Browser DevTools (F12)
+───────────────────────────────────
+
+[ ] Buka halaman edit monitoring
+[ ] Tekan F12 untuk buka DevTools
+[ ] Pilih tab "Network"
+[ ] Centang "Disable cache"
+[ ] Biarkan DevTools terbuka saat test
+
+
+STEP 2: Test Upload Foto Baru
+─────────────────────────────
+
+[ ] Klik "Choose File" pada field Foto Dokumentasi
+[ ] Pilih foto JPG/PNG (pastikan < 5MB)
+[ ] Pastikan nama file tampil di sebelah button
+[ ] Klik "Simpan Perubahan"
+
+
+STEP 3: Monitor Network Tab
+───────────────────────────
+
+Saat form di-submit:
+
+[ ] Cek Request di Network tab
+[ ] Klik request "update" atau ID monitoring
+[ ] Lihat tab "Headers"
+[ ] Cek:
+    - Request Method: POST (with _method=PUT)
+    - Content-Type: multipart/form-data
+    
+[ ] Lihat tab "Payload" atau "Form Data"
+[ ] Cek apakah ada:
+    - foto: (binary) atau nama file → BENAR ✓
+    - foto: (empty) atau tidak ada → SALAH, file tidak ter-upload ✗
+
+
+STEP 4: Check Response
+─────────────────────
+
+[ ] Lihat Response di Network tab
+[ ] Status: 302 (redirect) → Berhasil ✓
+[ ] Status: 422 (validation error) → Ada error validasi ✗
+[ ] Status: 500 (server error) → Ada bug server ✗
+
+
+STEP 5: Check Console Tab
+─────────────────────────
+
+[ ] Lihat tab "Console" di DevTools
+[ ] Ada JavaScript error? → Catat error message
+[ ] Ada warning? → Catat warning
+[ ] Bersih tanpa error? → JavaScript OK ✓
+
+
+STEP 6: Verify Storage
+─────────────────────
+
+Jika foto benar-benar tidak tersimpan:
+
+[ ] SSH/FTP ke server
+[ ] Cek folder: storage/app/evidence/monitoring/
+[ ] Lihat file terakhir yang di-upload
+[ ] Cek timestamp file → apakah baru saja di-upload?
+[ ] Cek ukuran file → apakah sesuai dengan yang di-upload?
+
+
+STEP 7: Check Database
+─────────────────────
+
+[ ] Buka database
+[ ] Query: 
+    SELECT id, foto, foto_disk, updated_at 
+    FROM water_monitorings 
+    WHERE id = [ID_MONITORING]
+    ORDER BY updated_at DESC
+    
+[ ] Cek kolom 'foto' → apakah berubah?
+[ ] Cek kolom 'updated_at' → apakah baru saja?
+[ ] Jika foto berubah tapi tampilan sama → cache browser!
+
+
+STEP 8: Hard Refresh Browser
+────────────────────────────
+
+[ ] Tekan Ctrl + F5 (Windows) atau Cmd + Shift + R (Mac)
+[ ] Atau Ctrl + Shift + Delete → Clear cache
+[ ] Reload halaman
+[ ] Apakah foto berubah sekarang?
+
+
+═══════════════════════════════════════════════════════════════════════
+TESTING CHECKLIST - MANUAL VERIFICATION
+═══════════════════════════════════════════════════════════════════════
+
+TEST 1: Update Foto dengan File Baru
+────────────────────────────────────
+
+[ ] Login sebagai petugas/admin
+[ ] Buka menu Monitoring → Lihat daftar
+[ ] Klik "Edit" pada salah satu record
+[ ] Form edit tampil dengan foto saat ini
+[ ] Klik "Choose File"
+[ ] Pilih foto JPG/PNG baru (< 5MB)
+[ ] JANGAN ubah field lain
+[ ] Klik "Simpan Perubahan"
+[ ] Redirect ke dashboard dengan pesan sukses
+[ ] Kembali ke list monitoring
+[ ] Cek apakah foto berubah?
+    - Jika berubah: ✓ BERHASIL
+    - Jika sama: Lanjut ke diagnostics
+
+
+TEST 2: Update Data Tanpa Ubah Foto
+───────────────────────────────────
+
+[ ] Edit monitoring
+[ ] Ubah kondisi atau keterangan
+[ ] JANGAN pilih foto baru
+[ ] Submit
+[ ] Verify: Data berubah tapi foto tetap sama ✓
+
+
+TEST 3: Update Foto + Data Bersamaan
+────────────────────────────────────
+
+[ ] Edit monitoring
+[ ] Upload foto baru
+[ ] Ubah kondisi
+[ ] Ubah keterangan
+[ ] Submit
+[ ] Verify: SEMUA perubahan tersimpan ✓
+
+
+═══════════════════════════════════════════════════════════════════════
+LAPORAN HASIL TEST - ISI INI SETELAH TESTING
+═══════════════════════════════════════════════════════════════════════
+
+TEST HASIL:
+[ ] Test 1: Berhasil / Gagal
+[ ] Test 2: Berhasil / Gagal
+[ ] Test 3: Berhasil / Gagal
+
+NETWORK TAB FINDINGS:
+- Request Content-Type: _____________________
+- Form Data foto field: _____________________
+- Response Status: _____________________
+
+CONSOLE TAB FINDINGS:
+- JavaScript errors: Yes / No
+- Error message (jika ada): _____________________
+
+STORAGE CHECK:
+- File uploaded to server: Yes / No
+- File path: _____________________
+- File size matches: Yes / No
+
+DATABASE CHECK:
+- Field 'foto' berubah: Yes / No
+- Old value: _____________________
+- New value: _____________________
+- Field 'updated_at' berubah: Yes / No
+
+BROWSER CACHE:
+- Hard refresh solved issue: Yes / No
+
+
+═══════════════════════════════════════════════════════════════════════
+REKOMENDASI BERDASARKAN ANALISIS KODE
+═══════════════════════════════════════════════════════════════════════
+
+1. KODE SUDAH BENAR - Tidak perlu perbaikan kode
+   
+2. KEMUNGKINAN BESAR: Browser cache
+   → SOLUSI: Hard refresh (Ctrl+F5)
+   
+3. JIKA BUKAN CACHE: User tidak benar-benar upload file baru
+   → SOLUSI: Pastikan "Choose File" dan pilih file
+   
+4. JIKA MASIH GAGAL: Jalankan diagnostic steps di atas
+   → Kumpulkan data dari Network/Console/Storage/Database
+   → Laporkan hasil lengkap untuk analisis lebih lanjut
+
+5. UNTUK DEVELOPMENT: Tambahkan cache-busting di URL foto
+   → Append ?v=timestamp ke URL foto
+   → Contoh: /foto/monitoring/{id}?v=1697654321
+   → Ini akan force browser reload foto baru
+
+
+═══════════════════════════════════════════════════════════════════════
+FILE LOKASI UNTUK REFERENCE
+═══════════════════════════════════════════════════════════════════════
+
+Controller: app/Http/Controllers/MonitoringController.php (line 163-224)
+View: resources/views/monitoring/edit.blade.php
+Request: app/Http/Requests/UpdateWaterMonitoringRequest.php
+Model: app/Models/WaterMonitoring.php
+Trait: app/Models/Concerns/HasEvidencePhoto.php
+Helper: app/Support/PhotoStorage.php
+Photo Route: app/Http/Controllers/PhotoController.php (monitoring method)
+
+
+═══════════════════════════════════════════════════════════════════════
+END OF DIAGNOSTIC REPORT
+═══════════════════════════════════════════════════════════════════════
+
+Generated: 2026-10-13 15:22 WIB
+Status: KODE CORRECT - Issue kemungkinan besar cache browser
+Next: Jalankan diagnostic steps dan lapor hasil

@@ -38,7 +38,7 @@
                      kolom foto, supaya foto yang hilang di disk tidak muncul
                      sebagai gambar rusak. --}}
                 @if ($monitoring->fotoExists())
-                    <img src="{{ route('foto.monitoring', $monitoring) }}"
+                    <img src="{{ $monitoring->fotoUrl('foto.monitoring') }}"
                          alt="Foto pemeriksaan {{ $monitoring->location->nama_lokasi }}"
                          class="img-fluid rounded w-100">
                 @else

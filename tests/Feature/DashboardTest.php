@@ -38,10 +38,12 @@ class DashboardTest extends TestCase
         $location2 = MonitoringLocation::factory()->create(['status' => 'aktif']);
 
         // Create monitorings with different kondisi
+        $today = now()->toDateString();
+        
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location1->id,
-            'tanggal' => now()->toDateString(),
+            'tanggal' => $today,
             'kondisi' => 'normal',
             'sesi' => 'pagi',
         ]);
@@ -49,7 +51,7 @@ class DashboardTest extends TestCase
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location2->id,
-            'tanggal' => now()->toDateString(),
+            'tanggal' => $today,
             'kondisi' => 'debit_turun',
             'sesi' => 'siang',
         ]);
@@ -57,10 +59,13 @@ class DashboardTest extends TestCase
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location1->id,
-            'tanggal' => now()->toDateString(),
+            'tanggal' => $today,
             'kondisi' => 'tekanan_air_kecil',
             'sesi' => 'sore',
         ]);
+        
+        // Verify data was created correctly
+        $this->assertEquals(3, WaterMonitoring::whereDate('tanggal', $today)->count());
 
         $response = $this->actingAs($this->admin)->get(route('dashboard'));
 

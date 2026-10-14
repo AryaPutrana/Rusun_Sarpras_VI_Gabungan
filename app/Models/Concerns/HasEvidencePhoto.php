@@ -69,4 +69,34 @@ trait HasEvidencePhoto
 
         return PhotoStorage::deleteQuietly($disk, $path);
     }
+
+    /**
+     * Token versi foto record ini.
+     *
+     * Diambil dari nama file foto sebab nama file berubah setiap kali foto
+     * diganti. Nilai ini dipakai sebagai query string ?v= pada fotoUrl()
+     * supaya browser tidak menyajikan foto lama dari cache.
+     */
+    public function fotoVersion(): ?string
+    {
+        $path = $this->fotoPath();
+
+        return $path === null ? null : basename($path);
+    }
+
+    /**
+     * URL foto record ini, lengkap dengan versi cache-busting.
+     *
+     * Bila file foto tersedia, parameter ?v= berisi token versi sehingga
+     * URL ikut berubah begitu foto diganti. Bila foto tidak ada, URL tetap
+     * dikembalikan tanpa versi (endpoint akan memberi respons 404).
+     */
+    public function fotoUrl(string $routeName): string
+    {
+        $url = route($routeName, $this);
+
+        $version = $this->fotoVersion();
+
+        return $version === null ? $url : $url.'?v='.rawurlencode($version);
+    }
 }

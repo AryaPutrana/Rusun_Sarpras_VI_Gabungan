@@ -125,17 +125,51 @@ class ItemController extends Controller
             'min_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_STOCK],
             'unit' => 'required|max:50',
             'description' => 'nullable|string|max:60000',
+            // Mode pengelolaan stok yang dipilih pengguna
+            'stock_mode' => ['nullable', 'in:adjustment,direct'],
+            // Mode Adjustment
             'add_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_ADD_STOCK],
             'subtract_stock' => ['nullable', 'integer', 'min:0', 'max:'.$item->stock],
-            'subtract_reason' => ['nullable', 'required_with:subtract_stock', 'string', 'max:255'],
+            'subtract_reason' => ['nullable', 'string', 'max:255'],
+            // Mode Direct Edit
+            'new_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_STOCK],
+            'stock_change_reason' => ['nullable', 'string', 'max:255'],
         ], [
             'photo.max' => 'Ukuran foto maksimal 5MB.',
             'unit_price.max' => 'Harga satuan maksimal Rp 1.000.000.000.',
             'min_stock.max' => 'Batas minimum stok terlalu besar.',
             'add_stock.max' => 'Penambahan stok maksimal 1.000.000 Unit per kali.',
             'subtract_stock.max' => 'Pengurangan stok tidak boleh melebihi stok saat ini ('.$item->stock.' unit).',
-            'subtract_reason.required_with' => 'Alasan pengurangan stok wajib diisi.',
+            'new_stock.max' => 'Jumlah stok terlalu besar.',
         ]);
+
+        // Hanya mode terpilih yang diproses. Default 'adjustment' menjaga
+        // kompatibilitas dengan permintaan yang tidak mengirim stock_mode.
+        $stockMode = $validated['stock_mode'] ?? 'adjustment';
+
+        // Alasan pengurangan wajib hanya saat stok benar-benar dikurangi pada
+        // mode adjustment. Sebelumnya memakai required_with:subtract_stock,
+        // padahal form selalu mengirim subtract_stock=0 sehingga memblokir
+        // seluruh update — termasuk update yang tidak mengubah stok sama sekali.
+        if ($stockMode === 'adjustment'
+            && isset($validated['subtract_stock'])
+            && $validated['subtract_stock'] > 0
+            && empty($validated['subtract_reason'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'subtract_reason' => 'Alasan pengurangan stok wajib diisi.',
+            ]);
+        }
+
+        // Validasi custom: stock_change_reason wajib hanya jika stok benar-benar
+        // berubah pada mode direct edit.
+        if ($stockMode === 'direct'
+            && isset($validated['new_stock'])
+            && $validated['new_stock'] != $item->stock
+            && empty($validated['stock_change_reason'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'stock_change_reason' => 'Alasan perubahan stok wajib diisi saat mengubah stok.',
+            ]);
+        }
 
         $validated['min_stock'] = $validated['min_stock'] ?? 0;
         $validated['description'] = $validated['description'] ?? null;
@@ -144,47 +178,78 @@ class ItemController extends Controller
         $newFilename = null;
 
         try {
-            DB::transaction(function () use ($request, $id, &$validated, &$oldPhoto, &$newFilename) {
+            DB::transaction(function () use ($request, $id, &$validated, &$oldPhoto, &$newFilename, $stockMode) {
                 // Lock baris untuk mencegah race condition
                 $locked = Item::whereKey($id)->lockForUpdate()->firstOrFail();
 
-                // Tambah stok hanya dari server (anti lost-update: nilai stok tidak diterima dari klien)
-                if (! empty($validated['add_stock']) && $validated['add_stock'] > 0) {
-                    $locked->increment('stock', $validated['add_stock']);
+                // MODE 1: ADJUSTMENT - Tambah/kurangi dari stok saat ini.
+                // Hanya dijalankan pada mode adjustment supaya perubahan tidak
+                // ditimpa oleh nilai new_stock dari section mode direct yang
+                // selalu ikut terkirim oleh form.
+                if ($stockMode === 'adjustment') {
+                    if (! empty($validated['add_stock']) && $validated['add_stock'] > 0) {
+                        $locked->increment('stock', $validated['add_stock']);
 
-                    // Audit trail untuk penambahan stok
-                    \App\Models\StockAdjustment::create([
-                        'item_id' => $locked->id,
-                        'user_id' => auth()->id(),
-                        'type' => 'add',
-                        'quantity' => $validated['add_stock'],
-                        'reason' => 'Penambahan stok melalui form edit barang',
-                    ]);
-                }
-                unset($validated['add_stock']);
-
-                // Kurangi stok (untuk koreksi kesalahan input)
-                if (! empty($validated['subtract_stock']) && $validated['subtract_stock'] > 0) {
-                    // Re-check stok di dalam lock (race condition guard)
-                    if ($locked->stock < $validated['subtract_stock']) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            'subtract_stock' => 'Stok tidak mencukupi. Stok saat ini: '.$locked->stock.' unit. Kemungkinan ada pengambilan bersamaan.',
+                        // Audit trail untuk penambahan stok
+                        \App\Models\StockAdjustment::create([
+                            'item_id' => $locked->id,
+                            'user_id' => auth()->id(),
+                            'type' => 'add',
+                            'quantity' => $validated['add_stock'],
+                            'reason' => 'Penambahan stok melalui form edit barang',
                         ]);
                     }
 
-                    $locked->decrement('stock', $validated['subtract_stock']);
+                    if (! empty($validated['subtract_stock']) && $validated['subtract_stock'] > 0) {
+                        // Re-check stok di dalam lock (race condition guard)
+                        if ($locked->stock < $validated['subtract_stock']) {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                'subtract_stock' => 'Stok tidak mencukupi. Stok saat ini: '.$locked->stock.' unit. Kemungkinan ada pengambilan bersamaan.',
+                            ]);
+                        }
 
-                    // Audit trail untuk pengurangan stok
+                        $locked->decrement('stock', $validated['subtract_stock']);
+
+                        // Audit trail untuk pengurangan stok
+                        \App\Models\StockAdjustment::create([
+                            'item_id' => $locked->id,
+                            'user_id' => auth()->id(),
+                            'type' => 'subtract',
+                            'quantity' => $validated['subtract_stock'],
+                            'reason' => $validated['subtract_reason'] ?? 'Koreksi stok',
+                        ]);
+                    }
+                }
+                unset($validated['add_stock']);
+                unset($validated['subtract_stock']);
+                unset($validated['subtract_reason']);
+
+                // MODE 2: DIRECT EDIT - Ganti stok langsung dengan angka baru.
+                // Hanya dijalankan pada mode direct agar tidak menimpa hasil
+                // adjustment.
+                if ($stockMode === 'direct'
+                    && isset($validated['new_stock'])
+                    && $validated['new_stock'] != $locked->stock) {
+                    $oldStock = $locked->stock;
+                    $newStock = $validated['new_stock'];
+                    $difference = $newStock - $oldStock;
+
+                    // Update stok langsung
+                    $locked->stock = $newStock;
+                    $locked->save();
+
+                    // Audit trail untuk perubahan stok langsung
                     \App\Models\StockAdjustment::create([
                         'item_id' => $locked->id,
                         'user_id' => auth()->id(),
-                        'type' => 'subtract',
-                        'quantity' => $validated['subtract_stock'],
-                        'reason' => $validated['subtract_reason'] ?? 'Koreksi stok',
+                        'type' => $difference >= 0 ? 'add' : 'subtract',
+                        'quantity' => abs($difference),
+                        'reason' => $validated['stock_change_reason'] ?? 'Edit stok langsung dari '.$oldStock.' ke '.$newStock,
                     ]);
                 }
-                unset($validated['subtract_stock']);
-                unset($validated['subtract_reason']);
+                unset($validated['new_stock']);
+                unset($validated['stock_change_reason']);
+                unset($validated['stock_mode']);
 
                 // Ganti foto bila ada upload baru
                 if ($request->hasFile('photo')) {
@@ -193,6 +258,9 @@ class ItemController extends Controller
                     $photo->storeAs('public/items', $newFilename);
                     $validated['photo'] = $newFilename;
                     $oldPhoto = $locked->photo;
+                } else {
+                    // Hapus field photo dari validated untuk mencegah overwrite dengan null
+                    unset($validated['photo']);
                 }
 
                 $locked->update($validated);

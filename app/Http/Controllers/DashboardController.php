@@ -49,7 +49,9 @@ class DashboardController extends Controller
             ->latest('waktu')
             ->latest('id');
 
-        $rangeBase = (clone $base)->whereBetween('tanggal', [$dari, $sampai]);
+        $rangeBase = (clone $base)
+            ->whereDate('tanggal', '>=', $dari)
+            ->whereDate('tanggal', '<=', $sampai);
 
         $total = (clone $base)->count();
         $rangeCount = (clone $rangeBase)->count();

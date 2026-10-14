@@ -94,7 +94,6 @@ class WaterMonitoringTest extends TestCase
         $this->assertDatabaseHas('water_monitorings', [
             'user_id' => $this->petugas1->id,
             'location_id' => $this->activeLocation->id,
-            'tanggal' => today()->format('Y-m-d'),
             'sesi' => 'pagi',
             'waktu' => '08:00:00',
             'kondisi' => 'normal',
@@ -102,6 +101,7 @@ class WaterMonitoringTest extends TestCase
         ]);
 
         $monitoring = WaterMonitoring::first();
+        $this->assertEquals(today()->format('Y-m-d'), $monitoring->tanggal->format('Y-m-d'));
         $this->assertNotNull($monitoring->foto);
         Storage::disk(PhotoStorage::EVIDENCE)->assertExists($monitoring->foto);
     }
@@ -277,10 +277,18 @@ class WaterMonitoringTest extends TestCase
     /** @test */
     public function create_rejects_duplicate_location_date_sesi()
     {
+        $today = today();
+        
         $existing = WaterMonitoring::factory()->create([
             'user_id' => $this->petugas1->id,
             'location_id' => $this->activeLocation->id,
-            'tanggal' => today(),
+            'tanggal' => $today,
+            'sesi' => 'pagi',
+        ]);
+        
+        // Verify existing record was created
+        $this->assertDatabaseHas('water_monitorings', [
+            'location_id' => $this->activeLocation->id,
             'sesi' => 'pagi',
         ]);
 
@@ -288,7 +296,7 @@ class WaterMonitoringTest extends TestCase
 
         $data = [
             'location_id' => $this->activeLocation->id,
-            'tanggal' => today()->format('Y-m-d'),
+            'tanggal' => $today->format('Y-m-d'),
             'sesi' => 'pagi',
             'kondisi' => 'normal',
             'keterangan' => 'Duplikat',
@@ -298,7 +306,15 @@ class WaterMonitoringTest extends TestCase
         $response = $this->actingAs($this->petugas1)
             ->post(route('monitoring.store'), $data);
 
+        // Should redirect back with validation error
+        $response->assertStatus(302);
         $response->assertSessionHasErrors(['location_id']);
+        
+        // Ensure only one record exists
+        $this->assertEquals(1, WaterMonitoring::where('location_id', $this->activeLocation->id)
+            ->whereDate('tanggal', $today)
+            ->where('sesi', 'pagi')
+            ->count());
     }
 
     /** @test */
@@ -816,6 +832,44 @@ class WaterMonitoringTest extends TestCase
             ->get(route('foto.monitoring', $monitoring));
 
         $response->assertStatus(404);
+    }
+
+    /** @test */
+    public function foto_url_contains_version_token_when_photo_exists()
+    {
+        $monitoring = WaterMonitoring::factory()->create([
+            'user_id' => $this->petugas1->id,
+        ]);
+
+        Storage::disk(PhotoStorage::EVIDENCE)->put($monitoring->foto, 'photo content');
+
+        $url = $monitoring->fotoUrl('foto.monitoring');
+
+        $this->assertStringContainsString(
+            '?v='.rawurlencode(basename($monitoring->foto)),
+            $url
+        );
+    }
+
+    /** @test */
+    public function foto_url_version_changes_when_photo_replaced()
+    {
+        $monitoring = WaterMonitoring::factory()->create([
+            'user_id' => $this->petugas1->id,
+        ]);
+
+        Storage::disk(PhotoStorage::EVIDENCE)->put($monitoring->foto, 'old photo');
+        $oldUrl = $monitoring->fotoUrl('foto.monitoring');
+
+        $newPath = 'monitoring/'.uniqid().'.png';
+        Storage::disk(PhotoStorage::EVIDENCE)->put($newPath, 'new photo');
+        $monitoring->forceFill(['foto' => $newPath])->save();
+
+        $newUrl = $monitoring->fresh()->fotoUrl('foto.monitoring');
+
+        $this->assertStringContainsString('?v=', $oldUrl);
+        $this->assertStringContainsString('?v=', $newUrl);
+        $this->assertNotSame($oldUrl, $newUrl);
     }
 
     // ==================== EDGE CASE TESTS ====================

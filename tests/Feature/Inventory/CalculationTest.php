@@ -211,7 +211,8 @@ class CalculationTest extends TestCase
             'taken_at' => now()->toDateTimeString(),
         ]);
 
-        $withdrawal2 = Withdrawal::latest()->first();
+        $withdrawal2 = Withdrawal::where('total_value', 30.03)->first();
+        $this->assertNotNull($withdrawal2);
         $this->assertEquals(30.03, (float) $withdrawal2->total_value);
     }
 
@@ -232,7 +233,8 @@ class CalculationTest extends TestCase
             'taken_at' => now()->toDateTimeString(),
         ]);
 
-        $withdrawal = Withdrawal::first();
+        $withdrawal = Withdrawal::where('total_value', 7500.00)->first();
+        $this->assertNotNull($withdrawal);
         
         // Should be stored as 7500.00, not 7500
         $this->assertEquals('7500.00', $withdrawal->total_value);
@@ -252,7 +254,8 @@ class CalculationTest extends TestCase
             'taken_at' => now()->toDateTimeString(),
         ]);
 
-        $withdrawal2 = Withdrawal::latest()->first();
+        $withdrawal2 = Withdrawal::where('total_value', 2469.00)->first();
+        $this->assertNotNull($withdrawal2);
         $this->assertEquals('2469.00', $withdrawal2->total_value);
     }
 

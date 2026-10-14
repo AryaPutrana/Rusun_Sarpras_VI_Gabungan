@@ -23,7 +23,7 @@ class UpdateWaterMonitoringRequest extends StoreWaterMonitoringRequest
                         ->orWhere('id', $monitoring->location_id);
                 }),
                 Rule::unique('water_monitorings')->ignore($monitoring->id)->where(function ($query) {
-                    return $query->where('tanggal', $this->tanggal)
+                    return $query->whereDate('tanggal', $this->tanggal)
                         ->where('sesi', $this->sesi);
                 }),
             ],

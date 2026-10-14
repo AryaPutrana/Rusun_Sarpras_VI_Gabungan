@@ -1,0 +1,549 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║        RENCANA PERBAIKAN: BUG FOTO MONITORING TIDAK BISA UPDATE          ║
+║                     Generated: 2026-10-13 15:28                          ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+
+HASIL DEEP DIAGNOSTIC TEST:
+═══════════════════════════════════════════════════════════════════════════
+
+✓ ALL CHECKS PASSED:
+  ✓ Monitoring data exists
+  ✓ Evidence storage writable
+  ✓ Disk 'evidence' configured
+  ✓ Field 'foto' & 'foto_disk' fillable
+  ✓ Database update works
+  ✓ Routes registered
+  ✓ Validation request exists
+
+KESIMPULAN: Kode dan konfigurasi SUDAH BENAR!
+
+
+KEMUNGKINAN ROOT CAUSE (KARENA USER KONFIRMASI GAGAL):
+═══════════════════════════════════════════════════════════════════════════
+
+Karena semua test pass tapi user masih tidak bisa update foto, kemungkinan:
+
+1. Form tidak mengirim file (JavaScript issue atau user error)
+2. Silent validation failure (error tidak tampil di UI)
+3. PhotoStorage::storeUploaded() return null tanpa log
+4. Controller logic ada kondisi yang skip update foto
+5. Browser issue (cache atau form submission)
+
+
+RENCANA PERBAIKAN - TAMBAHKAN LOGGING & FEEDBACK
+═══════════════════════════════════════════════════════════════════════════
+
+Kita akan tambahkan logging detail di controller untuk track setiap step:
+
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ PERBAIKAN #1: TAMBAH LOGGING DI CONTROLLER                           │
+│ File: app/Http/Controllers/MonitoringController.php                  │
+│ Method: update() - Line 163                                          │
+└──────────────────────────────────────────────────────────────────────┘
+
+TUJUAN: Track apakah file benar-benar di-upload dan dimana gagalnya
+
+KODE YANG AKAN DITAMBAHKAN:
+
+```php
+public function update(UpdateWaterMonitoringRequest $request, WaterMonitoring $monitoring): RedirectResponse
+{
+    // ... existing code ...
+    
+    // LOGGING #1: Track request
+    \Log::info('Monitoring Update Started', [
+        'monitoring_id' => $monitoring->id,
+        'has_file' => $request->hasFile('foto'),
+        'file_info' => $request->hasFile('foto') ? [
+            'name' => $request->file('foto')->getClientOriginalName(),
+            'size' => $request->file('foto')->getSize(),
+            'mime' => $request->file('foto')->getMimeType(),
+        ] : null,
+    ]);
+    
+    // ... existing code ...
+    
+    if ($request->hasFile('foto')) {
+        // LOGGING #2: Before upload
+        \Log::info('Attempting to upload new photo', [
+            'monitoring_id' => $monitoring->id,
+            'old_foto' => $fotoLama,
+        ]);
+        
+        $fotoBaru = PhotoStorage::storeUploaded($request->file('foto'), PhotoStorage::DIR_MONITORING);
+        
+        // LOGGING #3: After upload
+        if ($fotoBaru === null) {
+            \Log::error('Photo upload FAILED - storeUploaded returned null', [
+                'monitoring_id' => $monitoring->id,
+            ]);
+            
+            return back()
+                ->withInput()
+                ->with('error', PhotoStorage::MESSAGE_GAGAL_SIMPAN);
+        }
+        
+        \Log::info('Photo uploaded successfully', [
+            'monitoring_id' => $monitoring->id,
+            'new_foto' => $fotoBaru,
+        ]);
+        
+        $data['foto'] = $fotoBaru;
+        $data['foto_disk'] = PhotoStorage::EVIDENCE;
+    } else {
+        // LOGGING #4: No file uploaded
+        \Log::info('No new photo uploaded - keeping existing', [
+            'monitoring_id' => $monitoring->id,
+            'existing_foto' => $fotoLama,
+        ]);
+    }
+    
+    // ... existing code ...
+    
+    try {
+        $monitoring->update($data);
+        
+        // LOGGING #5: Update success
+        \Log::info('Monitoring updated successfully', [
+            'monitoring_id' => $monitoring->id,
+            'foto_updated' => isset($data['foto']),
+            'new_foto_value' => $data['foto'] ?? 'unchanged',
+        ]);
+        
+    } catch (Throwable $exception) {
+        // ... existing error handling ...
+        
+        // LOGGING #6: Update failed
+        \Log::error('Monitoring update FAILED', [
+            'monitoring_id' => $monitoring->id,
+            'error' => $exception->getMessage(),
+        ]);
+        
+        throw $exception;
+    }
+    
+    // ... rest of code ...
+}
+```
+
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ PERBAIKAN #2: TAMBAH VISUAL FEEDBACK DI FORM                         │
+│ File: resources/views/monitoring/edit.blade.php                      │
+│ Line: 84-90                                                          │
+└──────────────────────────────────────────────────────────────────────┘
+
+TUJUAN: Pastikan user tau file sudah dipilih
+
+KODE YANG AKAN DITAMBAHKAN:
+
+```blade
+<div class="mb-3">
+    <label for="foto" class="form-label">Foto Dokumentasi</label>
+    <input type="file" 
+           id="foto" 
+           name="foto" 
+           accept="image/jpeg,image/png"
+           class="form-control @error('foto') is-invalid @enderror"
+           onchange="previewFile()">
+    
+    <!-- TAMBAHAN: File info display -->
+    <div id="file-info" class="mt-2 text-muted small" style="display:none;">
+        <i class="bi bi-check-circle text-success"></i> 
+        File dipilih: <span id="file-name"></span> 
+        (<span id="file-size"></span>)
+    </div>
+    
+    <div class="form-text">
+        Format: JPG, JPEG, atau PNG. Maksimal 5 MB. 
+        Kosongkan untuk mempertahankan foto saat ini.
+    </div>
+    @error('foto')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
+<!-- TAMBAHAN: JavaScript untuk preview -->
+<script>
+function previewFile() {
+    const input = document.getElementById('foto');
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'block';
+        
+        console.log('File selected:', {
+            name: file.name,
+            size: file.size,
+            type: file.type
+        });
+    } else {
+        fileInfo.style.display = 'none';
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+</script>
+```
+
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ PERBAIKAN #3: TAMBAH ERROR DISPLAY YANG LEBIH JELAS                 │
+│ File: resources/views/monitoring/edit.blade.php                      │
+│ Line: After opening card-body                                        │
+└──────────────────────────────────────────────────────────────────────┘
+
+KODE YANG AKAN DITAMBAHKAN:
+
+```blade
+<div class="card-body">
+    <!-- TAMBAHAN: Success/Error messages -->
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show">
+            <strong>Ada kesalahan:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    
+    <form method="POST" ...>
+```
+
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ PERBAIKAN #4: TAMBAH SUBMIT CONFIRMATION (OPTIONAL)                 │
+│ File: resources/views/monitoring/edit.blade.php                      │
+│ Line: Before closing form                                            │
+└──────────────────────────────────────────────────────────────────────┘
+
+KODE YANG AKAN DITAMBAHKAN:
+
+```blade
+<button type="submit" 
+        class="btn btn-primary" 
+        onclick="return confirmSubmit()">
+    <i class="bi bi-save"></i> Simpan Perubahan
+</button>
+
+<script>
+function confirmSubmit() {
+    const fileInput = document.getElementById('foto');
+    
+    if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (file.size > maxSize) {
+            alert('File terlalu besar! Maksimal 5MB.\nFile Anda: ' + formatFileSize(file.size));
+            return false;
+        }
+        
+        return confirm(
+            'Anda akan mengganti foto dengan:\n\n' +
+            'File: ' + file.name + '\n' +
+            'Size: ' + formatFileSize(file.size) + '\n\n' +
+            'Lanjutkan?'
+        );
+    }
+    
+    return true;
+}
+</script>
+```
+
+
+═══════════════════════════════════════════════════════════════════════
+LANGKAH-LANGKAH IMPLEMENTASI
+═══════════════════════════════════════════════════════════════════════
+
+STEP 1: Backup Files
+───────────────────────────────────────────────────────────────────────
+[ ] cp app/Http/Controllers/MonitoringController.php \
+       app/Http/Controllers/MonitoringController.php.backup
+
+[ ] cp resources/views/monitoring/edit.blade.php \
+       resources/views/monitoring/edit.blade.php.backup
+
+
+STEP 2: Implementasi Perbaikan
+───────────────────────────────────────────────────────────────────────
+[ ] Tambahkan logging di MonitoringController::update() (Perbaikan #1)
+[ ] Tambahkan file preview di edit form (Perbaikan #2)
+[ ] Tambahkan error display yang jelas (Perbaikan #3)
+[ ] Tambahkan submit confirmation (Perbaikan #4 - optional)
+
+
+STEP 3: Clear Cache
+───────────────────────────────────────────────────────────────────────
+[ ] php artisan config:clear
+[ ] php artisan view:clear
+[ ] php artisan cache:clear
+
+
+STEP 4: Test Update Foto
+───────────────────────────────────────────────────────────────────────
+[ ] Buka browser dengan F12 open
+[ ] Navigate ke Monitoring → Edit record
+[ ] Upload foto baru (< 5MB)
+[ ] Perhatikan:
+    - File info muncul setelah pilih file?
+    - Confirmation dialog muncul saat submit?
+[ ] Submit form
+[ ] Cek:
+    - Error message muncul? (catat error)
+    - Success message muncul?
+    - Foto benar-benar berubah?
+
+
+STEP 5: Check Logs
+───────────────────────────────────────────────────────────────────────
+[ ] Buka storage/logs/laravel.log
+[ ] Cari log entries dengan pattern:
+    "Monitoring Update Started"
+    "Attempting to upload new photo"
+    "Photo uploaded successfully"
+    "Monitoring updated successfully"
+
+[ ] Analisa log:
+    - Apakah "has_file" = true?
+    - Apakah "storeUploaded" success atau return null?
+    - Apakah database update success?
+    - Error apa yang muncul (jika ada)?
+
+
+STEP 6: Browser DevTools Check
+───────────────────────────────────────────────────────────────────────
+Network Tab:
+[ ] Request method: POST dengan _method=PUT?
+[ ] Content-Type: multipart/form-data?
+[ ] Form Data ada field "foto" dengan (binary)?
+[ ] Response status: 302 (redirect) atau 422 (validation)?
+
+Console Tab:
+[ ] Ada JavaScript error?
+[ ] Log "File selected" muncul saat pilih file?
+
+
+═══════════════════════════════════════════════════════════════════════
+SKENARIO DEBUGGING BERDASARKAN LOG
+═══════════════════════════════════════════════════════════════════════
+
+SKENARIO A: Log "has_file" = false
+────────────────────────────────────────────────────────────────────
+Artinya: Form tidak mengirim file ke server
+
+Penyebab kemungkinan:
+  1. Form tidak ada enctype="multipart/form-data"
+  2. Input name bukan "foto"
+  3. JavaScript menghapus file sebelum submit
+  4. Browser bug/issue
+
+Solusi:
+  → Cek form enctype di HTML source
+  → Cek Network tab Form Data
+  → Test di browser berbeda
+
+
+SKENARIO B: Log "has_file" = true, tapi "storeUploaded returned null"
+────────────────────────────────────────────────────────────────────
+Artinya: File sampai ke server tapi gagal disimpan
+
+Penyebab kemungkinan:
+  1. Storage permission issue
+  2. Disk penuh
+  3. Exception di PhotoStorage::storeUploaded()
+
+Solusi:
+  → Cek storage/logs/laravel.log untuk exception
+  → Cek disk space: df -h
+  → Cek permission: ls -la storage/app/evidence/monitoring
+
+
+SKENARIO C: Log "Photo uploaded successfully" tapi foto tidak berubah
+────────────────────────────────────────────────────────────────────
+Artinya: File tersimpan tapi database tidak update atau cache browser
+
+Penyebab kemungkinan:
+  1. Database update gagal (tapi tidak ada exception)
+  2. Field 'foto' tidak di-update (tidak masuk $data)
+  3. Browser cache
+
+Solusi:
+  → Cek database: SELECT foto, foto_disk, updated_at FROM water_monitorings WHERE id=X
+  → Jika foto berubah di DB tapi tampilan sama → Hard refresh (Ctrl+F5)
+  → Jika foto tidak berubah di DB → Cek log "Monitoring updated successfully"
+
+
+SKENARIO D: Tidak ada log sama sekali
+────────────────────────────────────────────────────────────────────
+Artinya: Request tidak sampai ke controller update()
+
+Penyebab kemungkinan:
+  1. Form action salah
+  2. Route tidak match
+  3. Middleware reject request
+  4. Form submit tidak terjadi
+
+Solusi:
+  → Cek form action di HTML source
+  → Cek browser Network tab - ada request ke /monitoring/{id}?
+  → Test submit form manual (tanpa JavaScript)
+
+
+═══════════════════════════════════════════════════════════════════════
+ALTERNATIVE SOLUTION: FORCE FOTO UPDATE
+═══════════════════════════════════════════════════════════════════════
+
+Jika setelah logging masih tidak ketemu masalahnya, kita bisa:
+
+OPTION 1: Ubah logic menjadi lebih eksplisit
+────────────────────────────────────────────────────────────────────
+
+Di MonitoringController::update(), ganti:
+
+BEFORE:
+```php
+if ($request->hasFile('foto')) {
+    $fotoBaru = PhotoStorage::storeUploaded(...);
+    if ($fotoBaru === null) {
+        return back()->withInput()->with('error', ...);
+    }
+    $data['foto'] = $fotoBaru;
+    $data['foto_disk'] = PhotoStorage::EVIDENCE;
+}
+```
+
+AFTER:
+```php
+if ($request->hasFile('foto')) {
+    $file = $request->file('foto');
+    
+    // Explicit validation
+    if (!$file->isValid()) {
+        return back()->withInput()->with('error', 'File upload gagal. Coba lagi.');
+    }
+    
+    // Try upload with more error info
+    try {
+        $path = $file->store(PhotoStorage::DIR_MONITORING, PhotoStorage::EVIDENCE);
+        
+        if (!$path) {
+            \Log::error('File store() returned false');
+            return back()->withInput()->with('error', 'Gagal menyimpan file ke storage.');
+        }
+        
+        $data['foto'] = $path;
+        $data['foto_disk'] = PhotoStorage::EVIDENCE;
+        
+        \Log::info('Photo stored', ['path' => $path]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Photo store exception', ['error' => $e->getMessage()]);
+        return back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+    }
+}
+```
+
+
+OPTION 2: Tambahkan direct SQL update sebagai fallback
+────────────────────────────────────────────────────────────────────
+
+Jika Eloquent update() bermasalah:
+
+```php
+// After successful file upload
+if (isset($data['foto']) && isset($data['foto_disk'])) {
+    \DB::table('water_monitorings')
+        ->where('id', $monitoring->id)
+        ->update([
+            'foto' => $data['foto'],
+            'foto_disk' => $data['foto_disk'],
+            'updated_at' => now(),
+        ]);
+    
+    \Log::info('Foto updated via direct SQL');
+}
+```
+
+
+═══════════════════════════════════════════════════════════════════════
+FILES YANG AKAN DIMODIFIKASI
+═══════════════════════════════════════════════════════════════════════
+
+1. app/Http/Controllers/MonitoringController.php
+   → Tambah logging di method update()
+   → Total penambahan: ~50 lines
+
+2. resources/views/monitoring/edit.blade.php
+   → Tambah file preview dan error display
+   → Total penambahan: ~60 lines
+
+
+═══════════════════════════════════════════════════════════════════════
+ESTIMASI WAKTU & PRIORITAS
+═══════════════════════════════════════════════════════════════════════
+
+Priority: HIGH (user sudah konfirmasi bug exist)
+
+Estimasi implementasi: 30 menit
+  - Perbaikan #1 (Logging): 15 menit
+  - Perbaikan #2 (File preview): 10 menit
+  - Perbaikan #3 (Error display): 5 menit
+  - Testing: 15 menit
+
+Total: ~1 jam dengan testing
+
+
+═══════════════════════════════════════════════════════════════════════
+APPROVAL REQUIRED
+═══════════════════════════════════════════════════════════════════════
+
+Mau saya lanjutkan implementasi perbaikan?
+
+[ ] YA - Implementasikan semua perbaikan (logging + UI improvements)
+[ ] YA - Hanya logging dulu untuk debugging
+[ ] TIDAK - Saya akan test manual dulu dengan panduan di atas
+
+Jika YA, saya akan:
+1. Backup file original
+2. Implement perbaikan 1-4
+3. Clear cache
+4. Generate test script
+5. Siap untuk testing
+
+Konfirmasi?
+
+═══════════════════════════════════════════════════════════════════════
+END OF REPAIR PLAN
+═══════════════════════════════════════════════════════════════════════

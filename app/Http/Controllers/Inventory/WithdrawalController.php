@@ -138,7 +138,6 @@ class WithdrawalController extends Controller
             'items.max' => 'Maksimal '.Withdrawal::MAX_ITEMS_PER_TRANSACTION.' jenis barang per transaksi.',
             'items.*.item_id.distinct' => 'Barang yang sama tidak boleh dipilih lebih dari sekali.',
             'items.*.quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
-            'quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
         ]);
 
         // Urutkan id barang sebelum locking: tanpa ini dua transaksi yang
@@ -299,7 +298,6 @@ class WithdrawalController extends Controller
             'items.max' => 'Maksimal '.Withdrawal::MAX_ITEMS_PER_TRANSACTION.' jenis barang per transaksi.',
             'items.*.item_id.distinct' => 'Barang yang sama tidak boleh dipilih lebih dari sekali.',
             'items.*.quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
-            'quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
         ]);
 
         // Urutkan id barang untuk mencegah deadlock
@@ -388,6 +386,16 @@ class WithdrawalController extends Controller
                         $item = Item::lockForUpdate()->find($oldItem->item_id);
                         if ($item) {
                             $item->increment('stock', $oldItem->quantity);
+                        } else {
+                            // Item sudah dihapus dari sistem, log untuk audit trail
+                            // Stok tidak bisa dikembalikan karena item tidak ada
+                            \Log::warning('Withdrawal edit: Cannot return stock - Item deleted', [
+                                'withdrawal_id' => $withdrawal->id,
+                                'item_id' => $oldItem->item_id,
+                                'quantity_not_returned' => $oldItem->quantity,
+                                'edited_by' => auth()->id(),
+                                'timestamp' => now()->toDateTimeString(),
+                            ]);
                         }
                     }
                 }

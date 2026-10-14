@@ -17,9 +17,17 @@ return new class extends Migration
      * Index kolom location_id tetap tersedia melalui unique index
      * (location_id, tanggal, sesi) sehingga foreign key baru tidak
      * membutuhkan index tambahan.
+     *
+     * SQLite tidak bisa melepas foreign key tanpa membuat ulang tabel, jadi
+     * migrasi ini dilewati di SQLite (dipakai oleh test). Aturan hapus tetap
+     * ditegakkan di aplikasi pada kedua driver.
      */
     public function up(): void
     {
+        if (\DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('water_monitorings', function (Blueprint $table) {
             $table->dropForeign(['location_id']);
 
@@ -35,6 +43,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (\DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('water_monitorings', function (Blueprint $table) {
             $table->dropForeign(['location_id']);
 

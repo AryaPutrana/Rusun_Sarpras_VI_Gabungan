@@ -28,7 +28,7 @@ class StoreWaterMonitoringRequest extends FormRequest
                 'required',
                 Rule::exists('monitoring_locations', 'id')->where(fn ($query) => $query->where('status', 'aktif')),
                 Rule::unique('water_monitorings')->where(function ($query) {
-                    return $query->where('tanggal', $this->tanggal)
+                    return $query->whereDate('tanggal', $this->tanggal)
                         ->where('sesi', $this->sesi);
                 }),
             ],

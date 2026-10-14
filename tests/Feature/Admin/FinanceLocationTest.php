@@ -184,7 +184,7 @@ class FinanceLocationTest extends TestCase
     /** @test */
     public function finance_location_list_shows_report_count()
     {
-        $location = FinanceLocation::factory()->create();
+        $location = FinanceLocation::factory()->create(['nama_lokasi' => 'AAA Test Location']);
         FinanceReport::factory()->count(5)->create([
             'location_id' => $location->id,
             'user_id' => $this->petugas->id,
@@ -195,9 +195,11 @@ class FinanceLocationTest extends TestCase
         $response->assertStatus(200);
         
         $locations = $response->viewData('locations');
-        $firstLocation = $locations->first();
+        // Find the location we created (should be first due to AAA prefix)
+        $testLocation = $locations->where('id', $location->id)->first();
         
-        $this->assertEquals(5, $firstLocation->finance_reports_count);
+        $this->assertNotNull($testLocation, 'Test location not found in response');
+        $this->assertEquals(5, $testLocation->finance_reports_count);
     }
 
     /** @test */

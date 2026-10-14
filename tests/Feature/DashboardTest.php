@@ -38,10 +38,12 @@ class DashboardTest extends TestCase
         $location2 = MonitoringLocation::factory()->create(['status' => 'aktif']);
 
         // Create monitorings with different kondisi
+        $today = now()->toDateString();
+        
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location1->id,
-            'tanggal' => now()->toDateString(),
+            'tanggal' => $today,
             'kondisi' => 'normal',
             'sesi' => 'pagi',
         ]);
@@ -49,7 +51,7 @@ class DashboardTest extends TestCase
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location2->id,
-            'tanggal' => now()->toDateString(),
+            'tanggal' => $today,
             'kondisi' => 'debit_turun',
             'sesi' => 'siang',
         ]);
@@ -57,10 +59,13 @@ class DashboardTest extends TestCase
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location1->id,
-            'tanggal' => now()->toDateString(),
+            'tanggal' => $today,
             'kondisi' => 'tekanan_air_kecil',
             'sesi' => 'sore',
         ]);
+        
+        // Verify data was created correctly
+        $this->assertEquals(3, WaterMonitoring::whereDate('tanggal', $today)->count());
 
         $response = $this->actingAs($this->admin)->get(route('dashboard'));
 
@@ -86,7 +91,7 @@ class DashboardTest extends TestCase
     {
         $location = MonitoringLocation::factory()->create(['status' => 'aktif']);
 
-        // Create monitoring for today
+        // Create monitoring for today (October 12, 2026)
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location->id,
@@ -94,7 +99,7 @@ class DashboardTest extends TestCase
             'kondisi' => 'normal',
         ]);
 
-        // Create monitoring for 5 days ago
+        // Create monitoring for 5 days ago (October 7, 2026 - still this month)
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location->id,
@@ -102,11 +107,11 @@ class DashboardTest extends TestCase
             'kondisi' => 'debit_turun',
         ]);
 
-        // Create monitoring for 10 days ago (outside 7 days)
+        // Create monitoring for last month (September 2026 - outside current month)
         WaterMonitoring::factory()->create([
             'user_id' => $this->petugas->id,
             'location_id' => $location->id,
-            'tanggal' => now()->subDays(10)->toDateString(),
+            'tanggal' => now()->subMonth()->toDateString(),
             'kondisi' => 'normal',
         ]);
 

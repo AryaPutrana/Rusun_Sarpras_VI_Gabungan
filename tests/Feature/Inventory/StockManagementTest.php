@@ -8,7 +8,9 @@ use App\Models\StockAdjustment;
 use App\Models\User;
 use App\Models\Withdrawal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class StockManagementTest extends TestCase
@@ -400,5 +402,168 @@ class StockManagementTest extends TestCase
         $this->assertEquals(85, $item1->fresh()->stock);
         $this->assertEquals(180, $item2->fresh()->stock);
         $this->assertEquals(140, $item3->fresh()->stock);
+    }
+
+    /** @test */
+    public function form_submit_add_stock_works_even_when_new_stock_is_sent()
+    {
+        $item = Item::factory()->create([
+            'stock' => 27,
+            'unit_price' => 50000,
+            'unit' => 'pcs',
+        ]);
+
+        // Payload meniru form edit asli: mode adjustment, tetapi field mode
+        // direct (new_stock) tetap ikut terkirim dengan nilai stok lama.
+        $response = $this->put(route('inventory.items.update', $item->id), [
+            'item_code' => $item->item_code,
+            'name' => $item->name,
+            'unit_price' => $item->unit_price,
+            'unit' => $item->unit,
+            'min_stock' => $item->min_stock,
+            'stock_mode' => 'adjustment',
+            'add_stock' => 10,
+            'subtract_stock' => 0,
+            'subtract_reason' => '',
+            'new_stock' => $item->stock,
+            'stock_change_reason' => '',
+        ]);
+
+        $response->assertRedirect(route('inventory.items.index'));
+        $response->assertSessionHasNoErrors();
+
+        $item->refresh();
+        $this->assertEquals(37, $item->stock, 'Penambahan stok harus tersimpan meski new_stock ikut terkirim');
+
+        $audit = StockAdjustment::where('type', 'add')->latest()->first();
+        $this->assertNotNull($audit);
+        $this->assertEquals(10, $audit->quantity);
+    }
+
+    /** @test */
+    public function form_submit_subtract_stock_works_even_when_new_stock_is_sent()
+    {
+        $item = Item::factory()->create([
+            'stock' => 27,
+            'unit_price' => 50000,
+            'unit' => 'pcs',
+        ]);
+
+        $response = $this->put(route('inventory.items.update', $item->id), [
+            'item_code' => $item->item_code,
+            'name' => $item->name,
+            'unit_price' => $item->unit_price,
+            'unit' => $item->unit,
+            'min_stock' => $item->min_stock,
+            'stock_mode' => 'adjustment',
+            'add_stock' => 0,
+            'subtract_stock' => 7,
+            'subtract_reason' => 'Barang rusak',
+            'new_stock' => $item->stock,
+            'stock_change_reason' => '',
+        ]);
+
+        $response->assertRedirect(route('inventory.items.index'));
+        $response->assertSessionHasNoErrors();
+
+        $item->refresh();
+        $this->assertEquals(20, $item->stock, 'Pengurangan stok harus tersimpan meski new_stock ikut terkirim');
+    }
+
+    /** @test */
+    public function subtract_without_reason_is_rejected_in_adjustment_mode()
+    {
+        $item = Item::factory()->create([
+            'stock' => 27,
+            'unit_price' => 50000,
+            'unit' => 'pcs',
+        ]);
+
+        $response = $this->put(route('inventory.items.update', $item->id), [
+            'item_code' => $item->item_code,
+            'name' => $item->name,
+            'unit_price' => $item->unit_price,
+            'unit' => $item->unit,
+            'min_stock' => $item->min_stock,
+            'stock_mode' => 'adjustment',
+            'add_stock' => 0,
+            'subtract_stock' => 5,
+            'subtract_reason' => '',
+            'new_stock' => $item->stock,
+        ]);
+
+        $response->assertSessionHasErrors('subtract_reason');
+
+        $item->refresh();
+        $this->assertEquals(27, $item->stock, 'Stok tidak boleh berubah saat validasi gagal');
+    }
+
+    /** @test */
+    public function form_submit_direct_edit_sets_new_stock()
+    {
+        $item = Item::factory()->create([
+            'stock' => 27,
+            'unit_price' => 50000,
+            'unit' => 'pcs',
+        ]);
+
+        $response = $this->put(route('inventory.items.update', $item->id), [
+            'item_code' => $item->item_code,
+            'name' => $item->name,
+            'unit_price' => $item->unit_price,
+            'unit' => $item->unit,
+            'min_stock' => $item->min_stock,
+            'stock_mode' => 'direct',
+            'add_stock' => 0,
+            'subtract_stock' => 0,
+            'subtract_reason' => '',
+            'new_stock' => 100,
+            'stock_change_reason' => 'Stock opname',
+        ]);
+
+        $response->assertRedirect(route('inventory.items.index'));
+        $response->assertSessionHasNoErrors();
+
+        $item->refresh();
+        $this->assertEquals(100, $item->stock, 'Mode direct harus mengganti stok dengan angka baru');
+
+        $audit = StockAdjustment::where('type', 'add')->latest()->first();
+        $this->assertNotNull($audit);
+        $this->assertEquals(73, $audit->quantity);
+    }
+
+    /** @test */
+    public function update_photo_alone_does_not_require_stock_reason()
+    {
+        Storage::fake('public');
+        Storage::fake('local');
+
+        $item = Item::factory()->create([
+            'stock' => 27,
+            'unit_price' => 50000,
+            'unit' => 'pcs',
+        ]);
+
+        $response = $this->put(route('inventory.items.update', $item->id), [
+            'item_code' => $item->item_code,
+            'name' => $item->name,
+            'unit_price' => $item->unit_price,
+            'unit' => $item->unit,
+            'min_stock' => $item->min_stock,
+            'photo' => UploadedFile::fake()->image('new.jpg'),
+            'stock_mode' => 'adjustment',
+            'add_stock' => 0,
+            'subtract_stock' => 0,
+            'subtract_reason' => '',
+            'new_stock' => $item->stock,
+            'stock_change_reason' => '',
+        ]);
+
+        $response->assertRedirect(route('inventory.items.index'));
+        $response->assertSessionHasNoErrors();
+
+        $item->refresh();
+        $this->assertNotNull($item->photo, 'Foto baru harus tersimpan di kolom photo');
+        $this->assertEquals(27, $item->stock, 'Stok tidak boleh berubah saat hanya ganti foto');
     }
 }

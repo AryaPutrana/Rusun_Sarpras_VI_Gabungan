@@ -67,70 +67,173 @@
                         @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label for="stock_display" class="form-label">Jumlah / Stok Saat Ini</label>
-                        <input type="number" class="form-control bg-light" 
-                               id="stock_display" value="{{ $item->stock }}" readonly>
-                        <small class="text-muted">Stok saat ini: <strong>{{ $item->stock }}</strong> {{ $item->unit }}</small>
-                    </div>
+                    <!-- Stock Management Section -->
+                    <div class="card mb-3 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <i class="bi bi-box-seam"></i> Kelola Stok Barang
+                        </div>
+                        <div class="card-body">
+                            <!-- Current Stock Display -->
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle-fill"></i> 
+                                <strong>Stok Saat Ini: {{ $item->stock }} {{ $item->unit }}</strong>
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="add_stock" class="form-label">
-                            <i class="bi bi-plus-circle"></i> Tambah Stok
-                        </label>
-                        <input type="number" class="form-control @error('add_stock') is-invalid @enderror" 
-                               id="add_stock" name="add_stock" value="{{ old('add_stock', 0) }}" 
-                               placeholder="Jumlah yang ingin ditambahkan" min="0">
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle"></i> Kosongkan atau isi 0 jika tidak menambah stok. 
-                            Contoh: isi 10 untuk menambah 10 unit ({{ $item->stock }} + 10 = {{ $item->stock + 10 }})
-                        </small>
-                        @error('add_stock')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                            <!-- Mode Selection -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Pilih Mode Update Stok:</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="stock_mode" id="mode_adjustment" value="adjustment" checked onchange="toggleStockMode()">
+                                    <label class="btn btn-outline-primary" for="mode_adjustment">
+                                        <i class="bi bi-plus-slash-minus"></i> Mode Adjustment (Tambah/Kurangi)
+                                    </label>
 
-                    <div class="mb-3">
-                        <label for="subtract_stock" class="form-label">
-                            <i class="bi bi-dash-circle text-danger"></i> Kurangi Stok (Koreksi)
-                        </label>
-                        <input type="number" class="form-control @error('subtract_stock') is-invalid @enderror" 
-                               id="subtract_stock" name="subtract_stock" value="{{ old('subtract_stock', 0) }}" 
-                               placeholder="Jumlah yang ingin dikurangi" min="0" max="{{ $item->stock }}"
-                               onchange="toggleSubtractReason()">
-                        <small class="text-muted text-danger">
-                            <i class="bi bi-exclamation-triangle"></i> Hati-hati! Untuk koreksi stok yang salah input. 
-                            Stok saat ini: <strong>{{ $item->stock }}</strong>. Maksimal kurangi: {{ $item->stock }} unit.
-                        </small>
-                        @error('subtract_stock')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                                    <input type="radio" class="btn-check" name="stock_mode" id="mode_direct" value="direct" onchange="toggleStockMode()">
+                                    <label class="btn btn-outline-success" for="mode_direct">
+                                        <i class="bi bi-pencil-square"></i> Mode Edit Langsung
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    <strong>Adjustment:</strong> Tambah/kurangi dari stok saat ini. 
+                                    <strong>Edit Langsung:</strong> Ganti dengan angka baru.
+                                </small>
+                            </div>
 
-                    <div class="mb-3" id="subtract_reason_wrapper" style="display: none;">
-                        <label for="subtract_reason" class="form-label text-danger">
-                            <i class="bi bi-pencil-square"></i> Alasan Pengurangan Stok <span class="text-danger">*</span>
-                        </label>
-                        <textarea class="form-control @error('subtract_reason') is-invalid @enderror" 
-                                  id="subtract_reason" name="subtract_reason" 
-                                  rows="3" 
-                                  placeholder="Contoh: Salah input pengambilan, seharusnya 10 unit tapi tercatat 100 unit"
-                                  maxlength="255">{{ old('subtract_reason') }}</textarea>
-                        <small class="text-muted">
-                            Wajib diisi untuk audit trail. Maksimal 255 karakter.
-                        </small>
-                        @error('subtract_reason')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                            <!-- MODE 1: ADJUSTMENT (Default) -->
+                            <div id="adjustment_mode_section">
+                                <div class="mb-3">
+                                    <label for="add_stock" class="form-label">
+                                        <i class="bi bi-plus-circle text-success"></i> Tambah Stok
+                                    </label>
+                                    <input type="number" class="form-control @error('add_stock') is-invalid @enderror" 
+                                           id="add_stock" name="add_stock" value="{{ old('add_stock') }}" 
+                                           placeholder="Jumlah yang ingin ditambahkan" min="0">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i> Contoh: isi 10 untuk menambah 10 unit 
+                                        ({{ $item->stock }} + 10 = <strong>{{ $item->stock + 10 }}</strong>)
+                                    </small>
+                                    @error('add_stock')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="subtract_stock" class="form-label">
+                                        <i class="bi bi-dash-circle text-danger"></i> Kurangi Stok (Koreksi)
+                                    </label>
+                                    <input type="number" class="form-control @error('subtract_stock') is-invalid @enderror" 
+                                           id="subtract_stock" name="subtract_stock" value="{{ old('subtract_stock') }}" 
+                                           placeholder="Jumlah yang ingin dikurangi" min="0" max="{{ $item->stock }}"
+                                           onchange="toggleSubtractReason()" oninput="toggleSubtractReason()">
+                                    <small class="text-muted text-danger">
+                                        <i class="bi bi-exclamation-triangle"></i> Hati-hati! Maksimal kurangi: {{ $item->stock }} unit.
+                                    </small>
+                                    @error('subtract_stock')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-0" id="subtract_reason_wrapper" style="display: none;">
+                                    <label for="subtract_reason" class="form-label text-danger">
+                                        <i class="bi bi-pencil-square"></i> Alasan Pengurangan Stok <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control @error('subtract_reason') is-invalid @enderror" 
+                                              id="subtract_reason" name="subtract_reason" 
+                                              rows="2" 
+                                              placeholder="Contoh: Koreksi stok karena salah input"
+                                              maxlength="255">{{ old('subtract_reason') }}</textarea>
+                                    <small class="text-muted">Wajib diisi untuk audit trail.</small>
+                                    @error('subtract_reason')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- MODE 2: DIRECT EDIT -->
+                            <div id="direct_mode_section" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="new_stock" class="form-label">
+                                        <i class="bi bi-pencil-square text-success"></i> Stok Baru
+                                    </label>
+                                    <input type="number" class="form-control @error('new_stock') is-invalid @enderror" 
+                                           id="new_stock" name="new_stock" value="{{ old('new_stock', $item->stock) }}" 
+                                           placeholder="Masukkan jumlah stok baru" min="0">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i> Stok saat ini: <strong>{{ $item->stock }}</strong>. 
+                                        Isi dengan angka baru untuk mengganti stok.
+                                    </small>
+                                    @error('new_stock')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-0">
+                                    <label for="stock_change_reason" class="form-label">
+                                        <i class="bi bi-pencil-square"></i> Alasan Perubahan Stok <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control @error('stock_change_reason') is-invalid @enderror" 
+                                              id="stock_change_reason" name="stock_change_reason" 
+                                              rows="2" 
+                                              placeholder="Contoh: Update stok setelah stock opname"
+                                              maxlength="255">{{ old('stock_change_reason') }}</textarea>
+                                    <small class="text-muted">Wajib diisi saat mengubah stok langsung.</small>
+                                    @error('stock_change_reason')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <script>
+                        function toggleStockMode() {
+                            const mode = document.querySelector('input[name="stock_mode"]:checked').value;
+                            const adjustmentSection = document.getElementById('adjustment_mode_section');
+                            const directSection = document.getElementById('direct_mode_section');
+                            
+                            if (mode === 'adjustment') {
+                                adjustmentSection.style.display = 'block';
+                                directSection.style.display = 'none';
+                                
+                                // Clear direct mode fields HANYA jika belum diisi
+                                const newStockInput = document.getElementById('new_stock');
+                                const stockChangeReasonInput = document.getElementById('stock_change_reason');
+                                
+                                if (!newStockInput.value || newStockInput.value == {{ $item->stock }}) {
+                                    newStockInput.value = {{ $item->stock }};
+                                }
+                                stockChangeReasonInput.value = '';
+                                stockChangeReasonInput.required = false;
+                            } else {
+                                adjustmentSection.style.display = 'none';
+                                directSection.style.display = 'block';
+                                
+                                // Clear adjustment mode fields HANYA jika belum diisi
+                                const addStockInput = document.getElementById('add_stock');
+                                const subtractStockInput = document.getElementById('subtract_stock');
+                                const subtractReasonInput = document.getElementById('subtract_reason');
+                                
+                                if (!addStockInput.value) {
+                                    addStockInput.value = '';
+                                }
+                                if (!subtractStockInput.value) {
+                                    subtractStockInput.value = '';
+                                }
+                                subtractReasonInput.value = '';
+                                subtractReasonInput.required = false;
+                                document.getElementById('subtract_reason_wrapper').style.display = 'none';
+                                
+                                // Set direct mode as required
+                                document.getElementById('stock_change_reason').required = true;
+                            }
+                        }
+
                         function toggleSubtractReason() {
                             const subtractInput = document.getElementById('subtract_stock');
                             const reasonWrapper = document.getElementById('subtract_reason_wrapper');
                             const reasonTextarea = document.getElementById('subtract_reason');
                             
-                            if (subtractInput.value > 0) {
+                            if (subtractInput.value && subtractInput.value > 0) {
                                 reasonWrapper.style.display = 'block';
                                 reasonTextarea.required = true;
                             } else {
@@ -139,8 +242,24 @@
                             }
                         }
                         
-                        // Check on page load
-                        document.addEventListener('DOMContentLoaded', toggleSubtractReason);
+                        // Initialize on page load - hanya toggle visibility, JANGAN reset values
+                        document.addEventListener('DOMContentLoaded', function() {
+                            // Langsung set visibility tanpa clear values
+                            const mode = document.querySelector('input[name="stock_mode"]:checked').value;
+                            const adjustmentSection = document.getElementById('adjustment_mode_section');
+                            const directSection = document.getElementById('direct_mode_section');
+                            
+                            if (mode === 'adjustment') {
+                                adjustmentSection.style.display = 'block';
+                                directSection.style.display = 'none';
+                            } else {
+                                adjustmentSection.style.display = 'none';
+                                directSection.style.display = 'block';
+                            }
+                            
+                            // Check subtract reason visibility on load
+                            toggleSubtractReason();
+                        });
                     </script>
 
                     <div class="mb-3">

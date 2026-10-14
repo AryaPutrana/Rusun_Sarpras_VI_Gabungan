@@ -85,7 +85,9 @@ class DateTimeTest extends TestCase
             'taken_at' => $justAfterMidnight->toDateTimeString(),
         ]);
 
-        $withdrawal2 = Withdrawal::latest()->first();
+        // Get the second withdrawal by taken_at time
+        $withdrawal2 = Withdrawal::where('taken_at', $justAfterMidnight)->first();
+        $this->assertNotNull($withdrawal2);
         $this->assertEquals('2026-10-10', $withdrawal2->taken_at->toDateString());
         $this->assertEquals('00:00:00', $withdrawal2->taken_at->toTimeString());
     }
@@ -105,7 +107,8 @@ class DateTimeTest extends TestCase
             'taken_at' => $jan31->toDateTimeString(),
         ]);
 
-        $withdrawal = Withdrawal::first();
+        $withdrawal = Withdrawal::where('taken_at', $jan31)->first();
+        $this->assertNotNull($withdrawal);
         $this->assertEquals('2026-01-31', $withdrawal->taken_at->toDateString());
 
         // February 28 (non-leap year)
@@ -120,7 +123,8 @@ class DateTimeTest extends TestCase
             'taken_at' => $feb28->toDateTimeString(),
         ]);
 
-        $withdrawal = Withdrawal::latest()->first();
+        $withdrawal = Withdrawal::where('taken_at', $feb28)->first();
+        $this->assertNotNull($withdrawal);
         $this->assertEquals('2026-02-28', $withdrawal->taken_at->toDateString());
     }
 

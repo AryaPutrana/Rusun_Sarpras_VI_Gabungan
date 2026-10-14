@@ -49,7 +49,9 @@ class DashboardController extends Controller
             ->latest('waktu')
             ->latest('id');
 
-        $rangeBase = (clone $base)->whereBetween('tanggal', [$dari, $sampai]);
+        $rangeBase = (clone $base)
+            ->whereDate('tanggal', '>=', $dari)
+            ->whereDate('tanggal', '<=', $sampai);
 
         $total = (clone $base)->count();
         $rangeCount = (clone $rangeBase)->count();
@@ -240,7 +242,7 @@ class DashboardController extends Controller
         if (array_key_exists($preset, self::DATE_RANGE_PRESETS)) {
             return match ($preset) {
                 '7hari' => [now()->subDays(6)->toDateString(), $today],
-                'bulan_ini' => [now()->startOfMonth()->toDateString(), $today],
+                'bulan_ini' => [Carbon::now()->startOfMonth()->toDateString(), $today],
                 default => [$today, $today],
             };
         }
@@ -249,8 +251,14 @@ class DashboardController extends Controller
         $sampai = $this->parseDate($request->string('sampai')->toString());
 
         if ($dari && $sampai && $dari <= $sampai) {
+            $originalSampai = $sampai;
             $sampai = min($sampai, $today);
             $dari = min($dari, $sampai);
+
+            // User feedback jika tanggal disesuaikan
+            if ($originalSampai > $today) {
+                session()->flash('info', 'Tanggal akhir disesuaikan ke hari ini karena tidak boleh tanggal masa depan.');
+            }
 
             if ($dari <= $sampai) {
                 return [$dari, $sampai];

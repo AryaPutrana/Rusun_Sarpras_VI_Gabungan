@@ -166,7 +166,7 @@
                         <input type="email" id="email" name="email"
                                value="{{ old('email') }}"
                                class="form-control @error('email') is-invalid @enderror"
-                               autofocus autocomplete="username" placeholder="email" required>
+                               autofocus autocomplete="username" placeholder="Masukkan email" required>
                     </div>
                     @error('email')
                         <div class="invalid-feedback d-block mt-1">{{ $message }}</div>

@@ -195,31 +195,15 @@
                                 adjustmentSection.style.display = 'block';
                                 directSection.style.display = 'none';
                                 
-                                // Clear direct mode fields HANYA jika belum diisi
-                                const newStockInput = document.getElementById('new_stock');
+                                // Reset direct mode fields requirement
                                 const stockChangeReasonInput = document.getElementById('stock_change_reason');
-                                
-                                if (!newStockInput.value || newStockInput.value == {{ $item->stock }}) {
-                                    newStockInput.value = {{ $item->stock }};
-                                }
-                                stockChangeReasonInput.value = '';
                                 stockChangeReasonInput.required = false;
                             } else {
                                 adjustmentSection.style.display = 'none';
                                 directSection.style.display = 'block';
                                 
-                                // Clear adjustment mode fields HANYA jika belum diisi
-                                const addStockInput = document.getElementById('add_stock');
-                                const subtractStockInput = document.getElementById('subtract_stock');
+                                // Reset adjustment mode fields requirement
                                 const subtractReasonInput = document.getElementById('subtract_reason');
-                                
-                                if (!addStockInput.value) {
-                                    addStockInput.value = '';
-                                }
-                                if (!subtractStockInput.value) {
-                                    subtractStockInput.value = '';
-                                }
-                                subtractReasonInput.value = '';
                                 subtractReasonInput.required = false;
                                 document.getElementById('subtract_reason_wrapper').style.display = 'none';
                                 

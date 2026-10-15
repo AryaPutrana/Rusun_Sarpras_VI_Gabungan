@@ -56,8 +56,8 @@
                 @forelse ($monitorings as $i => $wm)
                     <tr>
                         <td>{{ $monitorings->firstItem() + $i }}</td>
-                        <td>{{ $wm->tanggal->format('d/m/Y') }}</td>
-                        <td>{{ $wm->waktu->format('H:i') }}</td>
+                        <td>{{ $wm->tanggal?->format('d/m/Y') ?? '-' }}</td>
+                        <td>{{ $wm->waktu?->format('H:i') ?? '-' }}</td>
                         <td>{{ $wm->location->nama_lokasi }}</td>
                         <td>{{ \App\Models\WaterMonitoring::SESI[$wm->sesi] ?? ucfirst($wm->sesi) }}</td>
                         <td>

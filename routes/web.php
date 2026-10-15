@@ -30,7 +30,9 @@ Route::get('/', function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:login')
+        ->name('login.attempt');
 });
 
 Route::middleware('auth')->group(function () {
@@ -106,7 +108,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         
         // Export routes dengan rate limiting
-        Route::middleware('throttle:10,1')->group(function () {
+        Route::middleware('throttle:exports')->group(function () {
             Route::get('/reports/export/pdf', [ReportController::class, 'exportPdf'])
                 ->name('reports.pdf');
             Route::get('/reports/export/excel', [ReportController::class, 'exportExcel'])

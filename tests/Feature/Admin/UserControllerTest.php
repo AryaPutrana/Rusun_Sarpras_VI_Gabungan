@@ -316,18 +316,36 @@ class UserControllerTest extends TestCase
     public function cannot_delete_user_with_water_monitorings()
     {
         $user = User::factory()->create();
-        // Create related water monitoring data (simulated)
-        // Note: This requires WaterMonitoring factory
-        $this->markTestIncomplete('Requires WaterMonitoring factory to be implemented');
+        
+        // Create water monitoring record by this user
+        WaterMonitoring::factory()->create([
+            'user_id' => $user->id,
+        ]);
+        
+        $response = $this->actingAs($this->admin)
+            ->delete(route('pengguna.destroy', $user));
+        
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
     }
 
     /** @test */
     public function cannot_delete_user_with_finance_reports()
     {
         $user = User::factory()->create();
-        // Create related finance report data (simulated)
-        // Note: This requires FinanceReport factory
-        $this->markTestIncomplete('Requires FinanceReport factory to be implemented');
+        
+        // Create finance report by this user
+        FinanceReport::factory()->create([
+            'user_id' => $user->id,
+        ]);
+        
+        $response = $this->actingAs($this->admin)
+            ->delete(route('pengguna.destroy', $user));
+        
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
     }
 
     /** @test */

@@ -34,7 +34,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="tanggal" class="form-label">Tanggal <span class="text-danger">*</span></label>
                             <input type="date" id="tanggal" name="tanggal"
-                                   value="{{ old('tanggal', $monitoring->tanggal->format('Y-m-d')) }}"
+                                   value="{{ old('tanggal', $monitoring->tanggal?->format('Y-m-d')) }}"
                                    class="form-control @error('tanggal') is-invalid @enderror" required>
                             @error('tanggal')
                                 <div class="invalid-feedback">{{ $message }}</div>

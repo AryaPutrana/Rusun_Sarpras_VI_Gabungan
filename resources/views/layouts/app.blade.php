@@ -115,7 +115,7 @@
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false">Monitoring Harian</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ route('lokasi.index') }}">Lokasi Monitoring</a></li>
-                            <li><a class="dropdown-item" href="{{ route('monitoring.index') }}">Histori Monitoring</a></li>
+                            <li><a class="dropdown-item" href="{{ route('monitoring.index') }}">Laporan Monitoring</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">

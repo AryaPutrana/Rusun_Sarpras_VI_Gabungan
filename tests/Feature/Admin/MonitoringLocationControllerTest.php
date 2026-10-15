@@ -290,9 +290,18 @@ class MonitoringLocationControllerTest extends TestCase
     public function cannot_delete_monitoring_location_with_water_monitorings()
     {
         $location = MonitoringLocation::factory()->create();
-        // Create related water monitoring data (simulated)
-        // Note: This requires WaterMonitoring factory
-        $this->markTestIncomplete('Requires WaterMonitoring factory to test cascade prevention');
+        
+        // Create water monitoring record linked to this location
+        WaterMonitoring::factory()->create([
+            'location_id' => $location->id,
+        ]);
+        
+        $response = $this->actingAs($this->admin)
+            ->delete(route('lokasi.destroy', $location));
+        
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('monitoring_locations', ['id' => $location->id]);
     }
 
     // ==================== STATUS TESTS ====================

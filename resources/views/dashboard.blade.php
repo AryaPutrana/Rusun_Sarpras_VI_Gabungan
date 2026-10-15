@@ -52,7 +52,7 @@
                     <li>
                         <strong>{{ $wm->location?->nama_lokasi ?? 'Unknown' }}</strong>
                         — {{ \App\Models\WaterMonitoring::KONDISI[$wm->kondisi] ?? ucfirst($wm->kondisi) }}
-                        ({{ $wm->tanggal->format('d/m/Y') }} {{ $wm->waktu->format('H:i') }})
+                        ({{ $wm->tanggal?->format('d/m/Y') ?? '-' }} {{ $wm->waktu?->format('H:i') ?? '-' }})
                         <a href="{{ route('monitoring.show', $wm) }}" class="text-decoration-none">Lihat Detail</a>
                     </li>
                 @endforeach
@@ -182,7 +182,7 @@
                                 <td>{{ $location->nama_lokasi }}</td>
                                 @if ($wm)
                                     <td><span class="badge {{ $kondisiBadge($wm->kondisi) }}">{{ $kondisiLabel($wm->kondisi) }}</span></td>
-                                    <td>{{ $wm->tanggal->format('d/m/Y') }} {{ $wm->waktu->format('H:i') }}</td>
+                                    <td>{{ $wm->tanggal?->format('d/m/Y') ?? '-' }} {{ $wm->waktu?->format('H:i') ?? '-' }}</td>
                                     @if ($isAdmin)
                                         <td>{{ $wm->user?->name ?? 'Unknown' }}</td>
                                     @endif
@@ -286,8 +286,8 @@
             <tbody>
                 @forelse ($recent as $i => $wm)
                     <tr>
-                        <td>{{ $wm->tanggal->format('d/m/Y') }}</td>
-                        <td>{{ $wm->waktu->format('H:i') }}</td>
+                        <td>{{ $wm->tanggal?->format('d/m/Y') ?? '-' }}</td>
+                        <td>{{ $wm->waktu?->format('H:i') ?? '-' }}</td>
                         <td>{{ $wm->location?->nama_lokasi ?? 'Unknown' }}</td>
                         <td>{{ \App\Models\WaterMonitoring::SESI[$wm->sesi] ?? ucfirst($wm->sesi) }}</td>
                         <td><span class="badge {{ $kondisiBadge($wm->kondisi) }}">{{ $kondisiLabel($wm->kondisi) }}</span></td>
@@ -381,7 +381,7 @@
                                 <tbody>
                                     @foreach($recentWithdrawals as $w)
                                     <tr>
-                                        <td class="small">{{ $w->taken_at->format('d/m/Y') }}</td>
+                                        <td class="small">{{ $w->taken_at?->format('d/m/Y') ?? '-' }}</td>
                                         <td class="small">{{ $w->taken_by }}</td>
                                         <td><span class="badge bg-secondary">{{ $w->rusun?->code ?? 'N/A' }}</span></td>
                                         <td class="text-end"><span class="badge bg-primary">{{ $w->items_count }}</span></td>

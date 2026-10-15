@@ -58,10 +58,10 @@
                     <dd class="col-sm-8">{{ $monitoring->location->nama_lokasi }}</dd>
 
                     <dt class="col-sm-4">Tanggal</dt>
-                    <dd class="col-sm-8">{{ $monitoring->tanggal->format('d/m/Y') }}</dd>
+                    <dd class="col-sm-8">{{ $monitoring->tanggal?->format('d/m/Y') ?? '-' }}</dd>
 
                     <dt class="col-sm-4">Waktu</dt>
-                    <dd class="col-sm-8">{{ $monitoring->waktu->format('H:i') }}</dd>
+                    <dd class="col-sm-8">{{ $monitoring->waktu?->format('H:i') ?? '-' }}</dd>
 
                     <dt class="col-sm-4">Sesi</dt>
                     <dd class="col-sm-8">

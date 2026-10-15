@@ -102,6 +102,14 @@ class UserController extends Controller
                 ->with('error', 'Pengguna tidak dapat dihapus karena memiliki data laporan bulanan.');
         }
 
+        // AUDIT TRAIL PROTECTION: Check stock adjustments history
+        // User yang pernah melakukan penyesuaian stok tidak boleh dihapus
+        // untuk menjaga integritas audit trail inventory
+        if (\Illuminate\Support\Facades\DB::table('stock_adjustments')->where('user_id', $pengguna->id)->exists()) {
+            return redirect()->route('pengguna.index')
+                ->with('error', 'Pengguna tidak dapat dihapus karena memiliki riwayat penyesuaian stok.');
+        }
+
         $pengguna->delete();
 
         return redirect()->route('pengguna.index')

@@ -129,7 +129,7 @@ class ItemController extends Controller
             'stock_mode' => ['nullable', 'in:adjustment,direct'],
             // Mode Adjustment
             'add_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_ADD_STOCK],
-            'subtract_stock' => ['nullable', 'integer', 'min:0', 'max:'.$item->stock],
+            'subtract_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_STOCK],
             'subtract_reason' => ['nullable', 'string', 'max:255'],
             // Mode Direct Edit
             'new_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_STOCK],
@@ -139,13 +139,27 @@ class ItemController extends Controller
             'unit_price.max' => 'Harga satuan maksimal Rp 1.000.000.000.',
             'min_stock.max' => 'Batas minimum stok terlalu besar.',
             'add_stock.max' => 'Penambahan stok maksimal 1.000.000 Unit per kali.',
-            'subtract_stock.max' => 'Pengurangan stok tidak boleh melebihi stok saat ini ('.$item->stock.' unit).',
+            'subtract_stock.max' => 'Pengurangan stok tidak boleh melebihi stok maksimum.',
             'new_stock.max' => 'Jumlah stok terlalu besar.',
         ]);
 
         // Hanya mode terpilih yang diproses. Default 'adjustment' menjaga
         // kompatibilitas dengan permintaan yang tidak mengirim stock_mode.
-        $stockMode = $validated['stock_mode'] ?? 'adjustment';
+        // Smart detection: jika stock_mode tidak dikirim (JS disabled), detect dari field yang diisi
+        if (!isset($validated['stock_mode'])) {
+            // Auto-detect mode berdasarkan field yang ada nilai
+            $hasAdjustmentFields = (!empty($validated['add_stock']) && $validated['add_stock'] > 0) 
+                                || (!empty($validated['subtract_stock']) && $validated['subtract_stock'] > 0);
+            $hasDirectFields = isset($validated['new_stock']) && $validated['new_stock'] != $item->stock;
+            
+            if ($hasDirectFields && !$hasAdjustmentFields) {
+                $stockMode = 'direct';
+            } else {
+                $stockMode = 'adjustment';  // Default aman
+            }
+        } else {
+            $stockMode = $validated['stock_mode'];
+        }
 
         // Alasan pengurangan wajib hanya saat stok benar-benar dikurangi pada
         // mode adjustment. Sebelumnya memakai required_with:subtract_stock,
@@ -311,9 +325,9 @@ class ItemController extends Controller
 
             // Hapus foto SETELAH delete berhasil, untuk hindari orphan files
             if ($photoPath) {
-                $stillUsed = Item::where('photo', $photoPath)
-                    ->where('id', '!=', $item->id)
-                    ->exists();
+                // Setelah item dihapus, cek apakah masih ada item lain yang pakai foto ini
+                $stillUsed = Item::where('photo', $photoPath)->exists();
+                
                 if (! $stillUsed) {
                     Storage::delete('public/items/'.$photoPath);
 

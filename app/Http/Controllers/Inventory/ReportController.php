@@ -239,10 +239,25 @@ class ReportController extends Controller
         // Untuk data lebih besar, gunakan Excel export yang lebih efisien
         $pdfLimit = 1000;
         
-        // Data detail per barang untuk PDF (tidak digrup)
-        $details = $this->withdrawalDetailQuery($startDate, $endDate, $rusunId)
-            ->limit($pdfLimit)
-            ->get();
+        // Count total BEFORE fetching to reject early if too large
+        $totalCount = $this->withdrawalDetailQuery($startDate, $endDate, $rusunId)->count();
+        
+        if ($totalCount > $pdfLimit) {
+            return redirect()->back()->with('error', 
+                "Data terlalu besar untuk PDF export ({$totalCount} baris). Maksimum {$pdfLimit} baris. " .
+                "Gunakan Excel export untuk data lebih dari {$pdfLimit} baris, atau perkecil rentang tanggal."
+            );
+        }
+        
+        // Boost memory limit for PDF generation (DomPDF + base64 images consume a lot)
+        $originalLimit = ini_get('memory_limit');
+        ini_set('memory_limit', '512M');
+        
+        try {
+            // Data detail per barang untuk PDF (tidak digrup)
+            $details = $this->withdrawalDetailQuery($startDate, $endDate, $rusunId)
+                ->limit($pdfLimit)
+                ->get();
 
         // Grup berdasarkan withdrawal_id untuk rowspan logic di PDF
         $groupedDetails = $details->groupBy('withdrawal_id')->map(function ($items) {
@@ -280,6 +295,11 @@ class ReportController extends Controller
         ));
 
         return $pdf->download('laporan-pengambilan-material.pdf');
+        
+        } finally {
+            // Restore original memory limit
+            ini_set('memory_limit', $originalLimit);
+        }
     }
 
     public function exportExcel(Request $request)

@@ -125,8 +125,8 @@ class ItemController extends Controller
             'min_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_STOCK],
             'unit' => 'required|max:50',
             'description' => 'nullable|string|max:60000',
-            // Mode pengelolaan stok yang dipilih pengguna
-            'stock_mode' => ['nullable', 'in:adjustment,direct'],
+            // Mode pengelolaan stok yang dipilih pengguna (REQUIRED untuk kejelasan)
+            'stock_mode' => ['required', 'in:adjustment,direct'],
             // Mode Adjustment
             'add_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_ADD_STOCK],
             'subtract_stock' => ['nullable', 'integer', 'min:0', 'max:'.Item::MAX_STOCK],
@@ -143,23 +143,9 @@ class ItemController extends Controller
             'new_stock.max' => 'Jumlah stok terlalu besar.',
         ]);
 
-        // Hanya mode terpilih yang diproses. Default 'adjustment' menjaga
-        // kompatibilitas dengan permintaan yang tidak mengirim stock_mode.
-        // Smart detection: jika stock_mode tidak dikirim (JS disabled), detect dari field yang diisi
-        if (!isset($validated['stock_mode'])) {
-            // Auto-detect mode berdasarkan field yang ada nilai
-            $hasAdjustmentFields = (!empty($validated['add_stock']) && $validated['add_stock'] > 0) 
-                                || (!empty($validated['subtract_stock']) && $validated['subtract_stock'] > 0);
-            $hasDirectFields = isset($validated['new_stock']) && $validated['new_stock'] != $item->stock;
-            
-            if ($hasDirectFields && !$hasAdjustmentFields) {
-                $stockMode = 'direct';
-            } else {
-                $stockMode = 'adjustment';  // Default aman
-            }
-        } else {
-            $stockMode = $validated['stock_mode'];
-        }
+        // Mode pengelolaan stok HARUS dipilih eksplisit oleh user
+        // Tidak ada auto-detect untuk mencegah salah interpretasi
+        $stockMode = $validated['stock_mode'] ?? 'adjustment';  // Default aman untuk backward compatibility
 
         // Alasan pengurangan wajib hanya saat stok benar-benar dikurangi pada
         // mode adjustment. Sebelumnya memakai required_with:subtract_stock,

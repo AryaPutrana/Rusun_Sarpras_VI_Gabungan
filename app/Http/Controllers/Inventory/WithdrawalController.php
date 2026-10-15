@@ -300,30 +300,37 @@ class WithdrawalController extends Controller
             'items.*.quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
         ]);
 
-        // Urutkan id barang untuk mencegah deadlock
-        $itemIds = collect($validated['items'])
+        // Ambil data lama untuk perbandingan stok
+        $oldItems = $withdrawal->items->keyBy('item_id');
+
+        // Kumpulkan SEMUA item_id yang perlu di-lock (new items + old items yang dihapus)
+        // untuk mencegah deadlock dengan lock batch yang konsisten
+        $allItemIds = collect($validated['items'])
             ->pluck('item_id')
+            ->merge($oldItems->keys())
+            ->unique()
             ->map(fn ($id) => (int) $id)
             ->sort()
             ->values();
 
         try {
-            DB::transaction(function () use ($validated, $itemIds, $withdrawal) {
-                // Kunci semua baris item sekaligus, urut ascending
-                $items = Item::whereIn('id', $itemIds)
+            DB::transaction(function () use ($validated, $allItemIds, $withdrawal, $oldItems) {
+                // Kunci SEMUA baris item sekaligus dalam urutan ascending untuk mencegah deadlock
+                $items = Item::whereIn('id', $allItemIds)
                     ->orderBy('id')
                     ->lockForUpdate()
                     ->get()
                     ->keyBy('id');
 
-                if ($items->count() !== $itemIds->count()) {
+                // Validasi: semua item dari input user harus ditemukan
+                $newItemIds = collect($validated['items'])->pluck('item_id')->map(fn ($id) => (int) $id);
+                $foundNewItems = $newItemIds->filter(fn ($id) => $items->has($id));
+                
+                if ($foundNewItems->count() !== $newItemIds->count()) {
                     throw ValidationException::withMessages([
                         'items' => 'Ada barang yang tidak ditemukan. Muat ulang halaman dan coba lagi.',
                     ]);
                 }
-
-                // Ambil data lama untuk perbandingan stok
-                $oldItems = $withdrawal->items->keyBy('item_id');
 
                 $detailRows = [];
                 $totalQuantity = 0;
@@ -383,7 +390,8 @@ class WithdrawalController extends Controller
                 foreach ($oldItems as $oldItem) {
                     if (! $newItemQuantities->has($oldItem->item_id)) {
                         // Barang ini ada di transaksi lama tapi tidak ada di data baru
-                        $item = Item::lockForUpdate()->find($oldItem->item_id);
+                        // Item sudah di-lock sebelumnya dalam batch, ambil dari collection
+                        $item = $items->get($oldItem->item_id);
                         if ($item) {
                             $item->increment('stock', $oldItem->quantity);
                         } else {
@@ -441,9 +449,24 @@ class WithdrawalController extends Controller
 
         try {
             DB::transaction(function () use ($withdrawal) {
+                // DEADLOCK PREVENTION: Lock semua items sekaligus dengan ordering konsisten
+                // Pattern sama dengan update() method untuk menghindari A-B/B-A deadlock
+                $itemIds = $withdrawal->items
+                    ->pluck('item_id')
+                    ->unique()
+                    ->map(fn($id) => (int)$id)
+                    ->sort()
+                    ->values();
+                
+                $items = Item::whereIn('id', $itemIds)
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+                
                 // Kembalikan semua stok barang yang diambil
                 foreach ($withdrawal->items as $withdrawalItem) {
-                    $item = Item::lockForUpdate()->find($withdrawalItem->item_id);
+                    $item = $items->get($withdrawalItem->item_id);
                     
                     if ($item) {
                         $item->increment('stock', $withdrawalItem->quantity);

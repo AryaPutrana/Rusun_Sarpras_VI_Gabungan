@@ -128,6 +128,7 @@ class StockManagementTest extends TestCase
             'name' => $item->name,
             'unit_price' => $item->unit_price,
             'unit' => $item->unit,
+            'stock_mode' => 'adjustment',
             'add_stock' => 50,
         ]);
 
@@ -337,6 +338,7 @@ class StockManagementTest extends TestCase
             'name' => $item->name,
             'unit_price' => $item->unit_price,
             'unit' => $item->unit,
+            'stock_mode' => 'adjustment',
             'subtract_stock' => 15,
             'subtract_reason' => 'Barang rusak',
         ]);
@@ -367,6 +369,7 @@ class StockManagementTest extends TestCase
             'name' => $item->name,
             'unit_price' => $item->unit_price,
             'unit' => $item->unit,
+            'stock_mode' => 'adjustment',
             'subtract_stock' => 15,
             'subtract_reason' => 'Test',
         ]);

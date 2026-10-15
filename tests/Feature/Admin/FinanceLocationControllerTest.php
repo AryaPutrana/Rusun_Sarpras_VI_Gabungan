@@ -290,9 +290,18 @@ class FinanceLocationControllerTest extends TestCase
     public function cannot_delete_finance_location_with_finance_reports()
     {
         $location = FinanceLocation::factory()->create();
-        // Create related finance report data (simulated)
-        // Note: This requires FinanceReport factory
-        $this->markTestIncomplete('Requires FinanceReport factory to test cascade prevention');
+        
+        // Create finance report linked to this location
+        FinanceReport::factory()->create([
+            'location_id' => $location->id,
+        ]);
+        
+        $response = $this->actingAs($this->admin)
+            ->delete(route('lokasiBulanan.destroy', $location));
+        
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('finance_locations', ['id' => $location->id]);
     }
 
     // ==================== STATUS TESTS ====================

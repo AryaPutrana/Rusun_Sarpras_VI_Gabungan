@@ -320,23 +320,23 @@ class ItemController extends Controller
         $photoPath = $item->photo;
 
         // Wrap dalam transaction untuk data integrity
-        DB::transaction(function () use ($item, $photoPath) {
+        DB::transaction(function () use ($item) {
             $item->delete();
-
-            // Hapus foto SETELAH delete berhasil, untuk hindari orphan files
-            if ($photoPath) {
-                // Setelah item dihapus, cek apakah masih ada item lain yang pakai foto ini
-                $stillUsed = Item::where('photo', $photoPath)->exists();
-                
-                if (! $stillUsed) {
-                    Storage::delete('public/items/'.$photoPath);
-
-                    // Invalidate cache thumbnail
-                    $cacheKey = 'item-thumb:'.sha1($photoPath.'|44|v1');
-                    Cache::forget($cacheKey);
-                }
-            }
         });
+        
+        // Hapus foto dan invalidate cache SETELAH transaction berhasil
+        if ($photoPath) {
+            // Cek apakah masih ada item lain yang pakai foto ini
+            $stillUsed = Item::where('photo', $photoPath)->exists();
+            
+            if (! $stillUsed) {
+                Storage::delete('public/items/'.$photoPath);
+
+                // Invalidate cache thumbnail (di luar transaction!)
+                $cacheKey = 'item-thumb:'.sha1($photoPath.'|44|v1');
+                Cache::forget($cacheKey);
+            }
+        }
 
         return redirect()->route('inventory.items.index')
             ->with('success', 'Barang berhasil dihapus.');

@@ -179,10 +179,11 @@ class WithdrawalController extends Controller
                         ]);
                     }
 
-                    $subtotal = $quantity * $item->unit_price;
+                    // Use BCMath for precise decimal calculation (prevent float rounding errors)
+                    $subtotal = bcmul((string) $quantity, (string) $item->unit_price, 2);
 
                     $totalQuantity += $quantity;
-                    $totalValue += $subtotal;
+                    $totalValue = bcadd((string) $totalValue, (string) $subtotal, 2);
 
                     $detailRows[] = [
                         'item_id' => $item->id,
@@ -374,9 +375,10 @@ class WithdrawalController extends Controller
                         $item->decrement('stock', $newQuantity);
                     }
 
-                    $subtotal = $newQuantity * $item->unit_price;
+                    // Use BCMath for precise decimal calculation (prevent float rounding errors)
+                    $subtotal = bcmul((string) $newQuantity, (string) $item->unit_price, 2);
                     $totalQuantity += $newQuantity;
-                    $totalValue += $subtotal;
+                    $totalValue = bcadd((string) $totalValue, (string) $subtotal, 2);
 
                     $detailRows[] = [
                         'item_id' => $item->id,

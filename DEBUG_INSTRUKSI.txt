@@ -1,0 +1,43 @@
+================================================================================
+  DEBUG INSTRUKSI - PDF EXPORT TIDAK BISA DOWNLOAD
+================================================================================
+
+Saya sudah menambahkan logging untuk debug masalah PDF export.
+
+LANGKAH-LANGKAH:
+===============
+
+1. Buka browser dan akses sistem: http://localhost:8000/inventory/reports
+   (atau port yang Anda gunakan)
+
+2. Login dengan credentials Anda
+
+3. Di halaman Laporan Pengambilan Material:
+   - Pilih Start Date (contoh: 2024-01-01)
+   - Pilih End Date (contoh: 2024-12-31)
+   - Pilih Rusun (atau biarkan "Semua Rusun")
+   - Klik "Tampilkan Laporan"
+
+4. Setelah laporan muncul, klik tombol "Export PDF"
+
+5. Setelah klik Export PDF (apapun yang terjadi), JANGAN TUTUP BROWSER
+
+6. Lalu jalankan command ini di terminal:
+   cat storage/logs/laravel.log
+
+7. Copy paste SEMUA OUTPUT log tersebut ke sini
+
+================================================================================
+
+YANG AKAN SAYA CEK DARI LOG:
+============================
+
+1. Apakah request sampai ke controller?
+2. Apakah CSRF token valid?
+3. Apakah parameter terkirim dengan benar?
+4. Apakah ada validation error?
+5. Apakah ada exception/error di controller?
+
+Dengan log ini saya akan tahu PERSIS kenapa PDF tidak bisa download.
+
+================================================================================

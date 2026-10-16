@@ -42,7 +42,7 @@
                 </a>
                 @if($startDate && $endDate)
                     <!-- Export PDF Form dengan CSRF Protection -->
-                    <form method="POST" action="{{ route('inventory.reports.pdf') }}" style="display: inline-block;" target="_blank">
+                    <form method="POST" action="{{ route('inventory.reports.pdf') }}" style="display: inline-block;">
                         @csrf
                         <input type="hidden" name="start_date" value="{{ $startDate }}">
                         <input type="hidden" name="end_date" value="{{ $endDate }}">

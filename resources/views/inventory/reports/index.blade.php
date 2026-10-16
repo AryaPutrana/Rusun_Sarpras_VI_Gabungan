@@ -41,14 +41,27 @@
                     <i class="bi bi-arrow-clockwise"></i> Reset
                 </a>
                 @if($startDate && $endDate)
-                    <a href="{{ route('inventory.reports.pdf', ['start_date' => $startDate, 'end_date' => $endDate, 'rusun_id' => $rusunId]) }}" 
-                       class="btn btn-danger" target="_blank" rel="noopener">
-                        <i class="bi bi-file-pdf"></i> Export PDF
-                    </a>
-                    <a href="{{ route('inventory.reports.excel', ['start_date' => $startDate, 'end_date' => $endDate, 'rusun_id' => $rusunId]) }}" 
-                       class="btn btn-success">
-                        <i class="bi bi-file-excel"></i> Export Excel
-                    </a>
+                    <!-- Export PDF Form dengan CSRF Protection -->
+                    <form method="POST" action="{{ route('inventory.reports.pdf') }}" style="display: inline-block;" target="_blank">
+                        @csrf
+                        <input type="hidden" name="start_date" value="{{ $startDate }}">
+                        <input type="hidden" name="end_date" value="{{ $endDate }}">
+                        <input type="hidden" name="rusun_id" value="{{ $rusunId }}">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-file-pdf"></i> Export PDF
+                        </button>
+                    </form>
+                    
+                    <!-- Export Excel Form dengan CSRF Protection -->
+                    <form method="POST" action="{{ route('inventory.reports.excel') }}" style="display: inline-block;">
+                        @csrf
+                        <input type="hidden" name="start_date" value="{{ $startDate }}">
+                        <input type="hidden" name="end_date" value="{{ $endDate }}">
+                        <input type="hidden" name="rusun_id" value="{{ $rusunId }}">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-file-excel"></i> Export Excel
+                        </button>
+                    </form>
                 @endif
             </div>
         </form>

@@ -27,9 +27,12 @@ class RouteServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         $this->routes(function () {
-            Route::middleware('api')
-                ->prefix('api')
-                ->group(base_path('routes/api.php'));
+            // API routes disabled - sistem ini tidak menggunakan API
+            // Jika diperlukan di masa depan, uncomment baris berikut dan pastikan
+            // semua endpoint ter-protect dengan auth:sanctum
+            // Route::middleware('api')
+            //     ->prefix('api')
+            //     ->group(base_path('routes/api.php'));
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));

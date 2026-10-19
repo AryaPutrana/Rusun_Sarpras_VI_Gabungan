@@ -30,8 +30,10 @@ Route::get('/', function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    // Rate limiting ditangani langsung di AuthController dengan logic custom
+    // (increment hanya pada failed attempts, clear on success)
+    // Tidak menggunakan middleware throttle:login untuk menghindari double limiting
     Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:login')
         ->name('login.attempt');
 });
 

@@ -212,22 +212,9 @@ class ReportController extends Controller
 
     public function exportPdf(Request $request)
     {
-        // DEBUG: Log semua input yang masuk
-        \Log::info('PDF Export Request', [
-            'all_input' => $request->all(),
-            'method' => $request->method(),
-            'url' => $request->fullUrl(),
-        ]);
-        
         $startDate = $this->scalarQuery($request, 'start_date');
         $endDate = $this->scalarQuery($request, 'end_date');
         $rusunId = $this->scalarQuery($request, 'rusun_id');
-
-        \Log::info('PDF Export Parsed Values', [
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'rusunId' => $rusunId,
-        ]);
 
         Validator::make(compact('startDate', 'endDate'), [
             'startDate' => 'nullable|date_format:Y-m-d',

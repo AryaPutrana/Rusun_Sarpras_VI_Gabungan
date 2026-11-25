@@ -188,6 +188,14 @@ class ItemController extends Controller
                 // selalu ikut terkirim oleh form.
                 if ($stockMode === 'adjustment') {
                     if (! empty($validated['add_stock']) && $validated['add_stock'] > 0) {
+                        // Validasi overflow: pastikan stock + add_stock tidak melebihi INT max
+                        $newStock = $locked->stock + $validated['add_stock'];
+                        if ($newStock > 2147483647) {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                'add_stock' => 'Penambahan stok akan melebihi kapasitas maksimum (2.147.483.647 unit). Stok saat ini: '.number_format($locked->stock, 0, ',', '.').' unit.',
+                            ]);
+                        }
+
                         $locked->increment('stock', $validated['add_stock']);
 
                         // Audit trail untuk penambahan stok

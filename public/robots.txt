@@ -13,5 +13,5 @@ Allow: /js/
 Allow: /images/
 Allow: /build/
 
-# Sitemap (update dengan URL production Anda)
-# Sitemap: https://yourdomain.com/sitemap.xml
+# Sitemap (update setelah deploy ke production)
+# Sitemap: https://your-production-domain.com/sitemap.xml

@@ -12,27 +12,38 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('finance_reports', function (Blueprint $table) {
-            $table->foreignId('location_id')
-                ->nullable()
-                ->after('user_id')
-                ->constrained('finance_locations')
-                ->nullOnDelete();
+        DB::transaction(function () {
+            Schema::table('finance_reports', function (Blueprint $table) {
+                $table->foreignId('location_id')
+                    ->nullable()
+                    ->after('user_id')
+                    ->constrained('finance_locations')
+                    ->nullOnDelete();
+            });
+
+            $now = now();
+
+            // Cek apakah lokasi 'Umum' sudah ada sebelum insert
+            $existing = DB::table('finance_locations')
+                ->where('nama_lokasi', 'Umum')
+                ->first();
+
+            if ($existing) {
+                $umumId = $existing->id;
+            } else {
+                $umumId = DB::table('finance_locations')->insertGetId([
+                    'nama_lokasi' => 'Umum',
+                    'keterangan' => 'Lokasi default untuk data sebelum pembaruan.',
+                    'status' => 'aktif',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+
+            DB::table('finance_reports')
+                ->whereNull('location_id')
+                ->update(['location_id' => $umumId]);
         });
-
-        $now = now();
-
-        $umumId = DB::table('finance_locations')->insertGetId([
-            'nama_lokasi' => 'Umum',
-            'keterangan' => 'Lokasi default untuk data sebelum pembaruan.',
-            'status' => 'aktif',
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-
-        DB::table('finance_reports')
-            ->whereNull('location_id')
-            ->update(['location_id' => $umumId]);
     }
 
     /**

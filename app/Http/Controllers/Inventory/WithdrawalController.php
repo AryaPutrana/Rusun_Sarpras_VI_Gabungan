@@ -384,14 +384,17 @@ class WithdrawalController extends Controller
                     }
 
                     // Use BCMath for precise decimal calculation (prevent float rounding errors)
-                    $subtotal = bcmul((string) $newQuantity, (string) $item->unit_price, 2);
+                    // Preserve historical price: gunakan harga dari withdrawal_items yang sudah ada
+                    // Jika item baru ditambahkan saat edit, gunakan current price
+                    $unitPrice = $oldItem ? $oldItem->unit_price : $item->unit_price;
+                    $subtotal = bcmul((string) $newQuantity, (string) $unitPrice, 2);
                     $totalQuantity += $newQuantity;
                     $totalValue = bcadd((string) $totalValue, (string) $subtotal, 2);
 
                     $detailRows[] = [
                         'item_id' => $item->id,
                         'quantity' => $newQuantity,
-                        'unit_price' => $item->unit_price,
+                        'unit_price' => $unitPrice,
                         'subtotal' => $subtotal,
                     ];
                 }

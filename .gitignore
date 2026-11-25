@@ -17,3 +17,30 @@ yarn-error.log
 /.idea
 /.vscode
 /.opencode
+# Security & Backup Files
+backup_*.sql
+*.sql.gz
+webshell.*
+backdoor.*
+test_*.php
+
+# Test Cache
+.phpunit.result.cache
+
+# Documentation with credentials (review before commit)
+*_BUGS_*.md
+*_TEST_*.md
+*_AUDIT_*.md
+*_REPORT_*.md
+AUTH_*.md
+AUTH_*.txt
+BUG_*.md
+BUG_*.txt
+LAPORAN_*.md
+LAPORAN_*.txt
+TEST_*.md
+RENCANA_*.md
+DOKUMENTASI_*.md
+ANALISIS_*.md
+COMPREHENSIVE_*.md
+CRITICAL_*.md

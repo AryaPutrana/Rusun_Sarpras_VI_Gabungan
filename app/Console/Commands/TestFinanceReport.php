@@ -15,6 +15,13 @@ class TestFinanceReport extends Command
 
     public function handle()
     {
+        // Production guard - prevent running test commands in production
+        if (app()->environment('production')) {
+            $this->error('⚠️  Test command tidak boleh dijalankan di production!');
+            $this->warn('Command ini hanya untuk development/testing.');
+            return 1;
+        }
+
         $this->info('=== FINANCE REPORT TEST SUITE ===');
         $this->newLine();
 

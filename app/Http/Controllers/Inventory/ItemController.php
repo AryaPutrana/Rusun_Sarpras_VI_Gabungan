@@ -30,7 +30,8 @@ class ItemController extends Controller
                     ->orWhere('name', 'like', "%{$search}%");
             })
             ->orderBy('item_code', 'asc') // Urutan dari terkecil ke terbesar (BRG-001, BRG-002...)
-            ->paginate(10); // 10 item per halaman
+            ->paginate(10) // 10 item per halaman
+            ->appends($request->query()); // Preserve search filter in pagination
 
         return view('inventory.items.index', compact('items', 'search'));
     }

@@ -25,9 +25,9 @@ class StoreFinanceReportRequest extends FormRequest
     {
         return [
             'tanggal' => ['required', 'date', 'before_or_equal:today'],
-            'location_id' => ['required', 'integer', 'exists:finance_locations,id'],
-            'kondisi' => ['required', Rule::in(array_keys(FinanceReport::KONDISI))],
-            'keterangan' => ['required', 'string'],
+            'location_id' => ['required', 'integer', 'exists:locations,id'],
+            'kondisi' => ['required', 'string', Rule::in(FinanceReport::KONDISI)],
+            'keterangan' => ['nullable', 'string', 'max:65000'], // TEXT max 65535, sisakan buffer
             'foto' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
         ];
     }

@@ -98,24 +98,27 @@ Route::middleware('auth')->group(function () {
         ->name('foto.finance');
 
     // ========== INVENTORY MATERIAL ==========
-    // Semua role dapat akses inventory (admin & petugas)
-    Route::prefix('inventory')->name('inventory.')->group(function () {
-        // Items (Inventory Barang)
-        Route::resource('items', ItemController::class);
-        
-        // Withdrawals (Pengambilan Barang)
-        Route::resource('withdrawals', WithdrawalController::class);
-        
-        // Reports (Laporan Pengambilan)
-        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-        
-        // Export routes dengan rate limiting dan CSRF protection
-        // Menggunakan POST untuk mencegah CSRF attacks dan DoS abuse
-        Route::middleware('throttle:exports')->group(function () {
-            Route::post('/reports/export/pdf', [ReportController::class, 'exportPdf'])
-                ->name('reports.pdf');
-            Route::post('/reports/export/excel', [ReportController::class, 'exportExcel'])
-                ->name('reports.excel');
+    // Hanya admin & petugas yang dapat akses inventory
+    Route::prefix('inventory')
+        ->name('inventory.')
+        ->middleware('role:admin,petugas')
+        ->group(function () {
+            // Items (Inventory Barang)
+            Route::resource('items', ItemController::class);
+            
+            // Withdrawals (Pengambilan Barang)
+            Route::resource('withdrawals', WithdrawalController::class);
+            
+            // Reports (Laporan Pengambilan)
+            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+            
+            // Export routes dengan rate limiting dan CSRF protection
+            // Menggunakan POST untuk mencegah CSRF attacks dan DoS abuse
+            Route::middleware('throttle:exports')->group(function () {
+                Route::post('/reports/export/pdf', [ReportController::class, 'exportPdf'])
+                    ->name('reports.pdf');
+                Route::post('/reports/export/excel', [ReportController::class, 'exportExcel'])
+                    ->name('reports.excel');
+            });
         });
-    });
 });

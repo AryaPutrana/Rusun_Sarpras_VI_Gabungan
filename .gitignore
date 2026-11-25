@@ -44,3 +44,8 @@ DOKUMENTASI_*.md
 ANALISIS_*.md
 COMPREHENSIVE_*.md
 CRITICAL_*.md
+
+# Test files destruktif - removed from tracking for security
+MONITORING_FOTO_DEEP_TEST.php
+security_tests.php
+tests/database_deep_test.php

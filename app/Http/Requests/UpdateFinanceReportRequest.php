@@ -18,7 +18,7 @@ class UpdateFinanceReportRequest extends StoreFinanceReportRequest
             'tanggal' => ['required', 'date', 'before_or_equal:today'],
             'location_id' => ['required', 'integer', 'exists:finance_locations,id'],
             'kondisi' => ['required', Rule::in(array_keys(FinanceReport::KONDISI))],
-            'keterangan' => ['required', 'string'],
+            'keterangan' => ['nullable', 'string', 'max:65000'], // Consistent with Store
             'foto' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
         ];
     }

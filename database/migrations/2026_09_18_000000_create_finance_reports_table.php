@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->date('tanggal');
             $table->string('kondisi');
-            $table->text('keterangan');
+            $table->text('keterangan')->nullable(); // Make nullable to match validation
             $table->string('foto');
             $table->timestamps();
         });

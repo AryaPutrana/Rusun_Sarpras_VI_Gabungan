@@ -12,6 +12,13 @@ class RusunSeeder extends Seeder
      */
     public function run(): void
     {
+        // Production guard - jangan seed data master di production
+        if (app()->environment('production')) {
+            $this->command->warn('⚠️  Seeder tidak dijalankan di production.');
+            $this->command->info('Tambahkan data rusun secara manual di production.');
+            return;
+        }
+
         $rusunData = [
             ['code' => 'RABEK', 'name' => 'Rawa Bebek'],
             ['code' => 'UMEN', 'name' => 'Umen'],

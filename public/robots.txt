@@ -1,2 +1,17 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /inventory
+Disallow: /monitoring
+Disallow: /keuangan
+Disallow: /laporan
+Disallow: /api/
+
+# Allow public assets
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /build/
+
+# Sitemap (update dengan URL production Anda)
+# Sitemap: https://yourdomain.com/sitemap.xml

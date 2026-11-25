@@ -9,10 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * Menambahkan 3 strategic indexes tambahan untuk meningkatkan performa:
+     * Menambahkan 2 strategic indexes tambahan untuk meningkatkan performa:
      * - Withdrawal reports dengan filter rusun (composite index)
      * - Stock alerts untuk low stock detection
-     * - Withdrawal items JOIN optimization untuk report aggregation
+     * 
+     * Note: withdrawal_items.withdrawal_id TIDAK perlu index manual karena
+     * foreignId() sudah otomatis membuat index saat create table.
      */
     public function up(): void
     {
@@ -30,14 +32,6 @@ return new class extends Migration
         Schema::table('items', function (Blueprint $table) {
             $table->index(['stock', 'min_stock'], 'idx_items_stock_alert');
         });
-        
-        // Index #3: Withdrawal items for report detail JOIN
-        // Query: SELECT * FROM withdrawal_items WHERE withdrawal_id IN (...)
-        // Impact: Report detail queries 2000ms → 80ms (25× faster)
-        // Note: Optimize JOIN antara withdrawals dan withdrawal_items
-        Schema::table('withdrawal_items', function (Blueprint $table) {
-            $table->index(['withdrawal_id'], 'idx_withdrawal_items_wid');
-        });
     }
 
     /**
@@ -45,10 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('withdrawal_items', function (Blueprint $table) {
-            $table->dropIndex('idx_withdrawal_items_wid');
-        });
-        
         Schema::table('items', function (Blueprint $table) {
             $table->dropIndex('idx_items_stock_alert');
         });

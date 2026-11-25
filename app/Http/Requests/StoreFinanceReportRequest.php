@@ -25,8 +25,12 @@ class StoreFinanceReportRequest extends FormRequest
     {
         return [
             'tanggal' => ['required', 'date', 'before_or_equal:today'],
-            'location_id' => ['required', 'integer', 'exists:locations,id'],
-            'kondisi' => ['required', 'string', Rule::in(FinanceReport::KONDISI)],
+            'location_id' => [
+                'required',
+                'integer',
+                Rule::exists('finance_locations', 'id')->where(fn ($query) => $query->where('status', 'aktif')),
+            ],
+            'kondisi' => ['required', Rule::in(array_keys(FinanceReport::KONDISI))],
             'keterangan' => ['nullable', 'string', 'max:65000'], // TEXT max 65535, sisakan buffer
             'foto' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
         ];
@@ -42,7 +46,7 @@ class StoreFinanceReportRequest extends FormRequest
             'tanggal.date' => 'Tanggal tidak valid.',
             'tanggal.before_or_equal' => 'Tanggal tidak boleh melebihi hari ini.',
             'location_id.required' => 'Lokasi wajib dipilih.',
-            'location_id.exists' => 'Lokasi tidak valid.',
+            'location_id.exists' => 'Lokasi tidak valid atau tidak aktif.',
             'kondisi.required' => 'Keterangan dropdown wajib dipilih.',
             'kondisi.in' => 'Keterangan dropdown tidak valid.',
             'keterangan.required' => 'Keterangan wajib diisi.',

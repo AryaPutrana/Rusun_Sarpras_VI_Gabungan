@@ -178,7 +178,16 @@ return new class extends Migration
             ->orderBy('id')
             ->get();
 
+        // CRITICAL: Backup withdrawal_items SEBELUM drop untuk preserve data
+        $itemsBackup = DB::table('withdrawal_items')
+            ->select('id', 'withdrawal_id', 'item_id', 'quantity', 'unit_price', 'subtotal', 'created_at', 'updated_at')
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($item) => (array) $item)
+            ->all();
+
         foreach ($rows as $row) {
+            // Ambil detail pertama untuk kolom legacy
             $first = DB::table('withdrawal_items')
                 ->where('withdrawal_id', $row->id)
                 ->orderBy('id')
@@ -205,6 +214,24 @@ return new class extends Migration
         Schema::dropIfExists('withdrawals');
 
         Schema::rename('withdrawals_new', 'withdrawals');
+        
+        // RESTORE withdrawal_items dengan data yang di-backup
+        Schema::create('withdrawal_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('withdrawal_id')->constrained('withdrawals')->cascadeOnDelete();
+            $table->foreignId('item_id')->constrained('items')->cascadeOnDelete();
+            $table->integer('quantity');
+            $table->decimal('unit_price', 15, 2);
+            $table->decimal('subtotal', 15, 2);
+            $table->timestamps();
+        });
+        
+        // Restore data withdrawal_items dari backup
+        if (!empty($itemsBackup)) {
+            foreach (array_chunk($itemsBackup, 500) as $chunk) {
+                DB::table('withdrawal_items')->insert($chunk);
+            }
+        }
 
         DB::statement('PRAGMA foreign_keys = ON');
     }

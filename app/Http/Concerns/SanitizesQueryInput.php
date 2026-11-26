@@ -15,11 +15,19 @@ use Illuminate\Http\Request;
 trait SanitizesQueryInput
 {
     /**
-     * Ambil parameter query sebagai string skalar, atau null bila kosong/tidak valid.
+     * Ambil parameter query atau POST body sebagai string skalar, atau null bila kosong/tidak valid.
+     * 
+     * Prioritas: POST body > Query string (untuk support POST forms dengan CSRF)
      */
     protected function scalarQuery(Request $request, string $key): ?string
     {
-        $value = $request->query($key);
+        // Check POST body first (for POST forms with CSRF protection)
+        $value = $request->input($key);
+        
+        // Fallback to query string if not in POST body
+        if (is_null($value)) {
+            $value = $request->query($key);
+        }
 
         if (is_array($value) || is_object($value) || is_null($value)) {
             return null;

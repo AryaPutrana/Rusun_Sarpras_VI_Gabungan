@@ -301,21 +301,29 @@ class WithdrawalController extends Controller
             'items.*.quantity.max' => 'Jumlah pengambilan maksimal 1.000.000 unit per barang.',
         ]);
 
-        // Ambil data lama untuk perbandingan stok
-        $oldItems = $withdrawal->items->keyBy('item_id');
+        // JANGAN baca oldItems di luar transaksi - race condition!
+        // $oldItems = $withdrawal->items->keyBy('item_id');
 
         // Kumpulkan SEMUA item_id yang perlu di-lock (new items + old items yang dihapus)
         // untuk mencegah deadlock dengan lock batch yang konsisten
         $allItemIds = collect($validated['items'])
             ->pluck('item_id')
-            ->merge($oldItems->keys())
+            ->merge($withdrawal->items->pluck('item_id'))  // Ambil dari relasi, belum di-load
             ->unique()
             ->map(fn ($id) => (int) $id)
             ->sort()
             ->values();
 
         try {
-            DB::transaction(function () use ($validated, $allItemIds, $withdrawal, $oldItems) {
+            DB::transaction(function () use ($validated, $allItemIds, $withdrawal) {
+                // Lock withdrawal dulu untuk mencegah concurrent edit
+                $withdrawal = Withdrawal::where('id', $withdrawal->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+                
+                // BARU baca oldItems SETELAH withdrawal di-lock
+                $oldItems = $withdrawal->items->keyBy('item_id');
+
                 // Kunci SEMUA baris item sekaligus dalam urutan ascending untuk mencegah deadlock
                 $items = Item::whereIn('id', $allItemIds)
                     ->orderBy('id')
@@ -376,14 +384,17 @@ class WithdrawalController extends Controller
                     }
 
                     // Use BCMath for precise decimal calculation (prevent float rounding errors)
-                    $subtotal = bcmul((string) $newQuantity, (string) $item->unit_price, 2);
+                    // Preserve historical price: gunakan harga dari withdrawal_items yang sudah ada
+                    // Jika item baru ditambahkan saat edit, gunakan current price
+                    $unitPrice = $oldItem ? $oldItem->unit_price : $item->unit_price;
+                    $subtotal = bcmul((string) $newQuantity, (string) $unitPrice, 2);
                     $totalQuantity += $newQuantity;
                     $totalValue = bcadd((string) $totalValue, (string) $subtotal, 2);
 
                     $detailRows[] = [
                         'item_id' => $item->id,
                         'quantity' => $newQuantity,
-                        'unit_price' => $item->unit_price,
+                        'unit_price' => $unitPrice,
                         'subtotal' => $subtotal,
                     ];
                 }

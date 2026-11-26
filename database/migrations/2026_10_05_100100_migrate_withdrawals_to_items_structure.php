@@ -13,45 +13,48 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('withdrawals', function (Blueprint $table) {
-            $table->integer('total_quantity')->default(0);
-            $table->decimal('total_value', 15, 2)->default(0);
-        });
+        // Wrap entire migration in transaction untuk atomicity
+        DB::transaction(function () {
+            Schema::table('withdrawals', function (Blueprint $table) {
+                $table->integer('total_quantity')->default(0);
+                $table->decimal('total_value', 15, 2)->default(0);
+            });
 
-        // Kolom lama masih ada pada tahap ini, jadi datanya bisa disalin apa adanya.
-        $legacy = DB::table('withdrawals')
-            ->select('id', 'item_id', 'quantity', 'unit_price', 'subtotal')
-            ->orderBy('id')
-            ->get();
+            // Kolom lama masih ada pada tahap ini, jadi datanya bisa disalin apa adanya.
+            $legacy = DB::table('withdrawals')
+                ->select('id', 'item_id', 'quantity', 'unit_price', 'subtotal')
+                ->orderBy('id')
+                ->get();
 
-        $rows = [];
+            $rows = [];
 
-        foreach ($legacy as $row) {
-            $rows[] = [
-                'withdrawal_id' => $row->id,
-                'item_id' => $row->item_id,
-                'quantity' => $row->quantity,
-                'unit_price' => $row->unit_price,
-                'subtotal' => $row->subtotal,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            foreach ($legacy as $row) {
+                $rows[] = [
+                    'withdrawal_id' => $row->id,
+                    'item_id' => $row->item_id,
+                    'quantity' => $row->quantity,
+                    'unit_price' => $row->unit_price,
+                    'subtotal' => $row->subtotal,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
 
-            if (count($rows) >= 500) {
-                DB::table('withdrawal_items')->insert($rows);
-                $rows = [];
+                if (count($rows) >= 500) {
+                    DB::table('withdrawal_items')->insert($rows);
+                    $rows = [];
+                }
             }
-        }
 
-        if (! empty($rows)) {
-            DB::table('withdrawal_items')->insert($rows);
-        }
+            if (! empty($rows)) {
+                DB::table('withdrawal_items')->insert($rows);
+            }
 
-        // Total diambil langsung dari kolom lama supaya nilai historis tidak berubah.
-        DB::table('withdrawals')->update([
-            'total_quantity' => DB::raw('quantity'),
-            'total_value' => DB::raw('subtotal'),
-        ]);
+            // Total diambil langsung dari kolom lama supaya nilai historis tidak berubah.
+            DB::table('withdrawals')->update([
+                'total_quantity' => DB::raw('quantity'),
+                'total_value' => DB::raw('subtotal'),
+            ]);
+        });
     }
 
     public function down(): void

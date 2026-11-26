@@ -1,0 +1,22 @@
+# Blokir eksekusi PHP di folder upload gambar
+# Mencegah webshell/backdoor dijalankan meski berhasil diupload
+
+<FilesMatch "\.(php|php3|php4|php5|phtml|phar)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Hanya izinkan akses file gambar
+<FilesMatch "\.(jpg|jpeg|png|webp|gif)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Nonaktifkan PHP engine
+php_flag engine off
+
+# Blokir akses .htaccess itu sendiri
+<Files ".htaccess">
+    Order Allow,Deny
+    Deny from all
+</Files>

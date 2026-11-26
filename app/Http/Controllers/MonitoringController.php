@@ -46,8 +46,9 @@ class MonitoringController extends Controller
     {
         $user = Auth::user();
 
-        $filterTanggal = $request->input('tanggal');
-        $filterLokasi  = $request->input('lokasi');
+        // Sanitize input untuk mencegah array injection (HTTP 500)
+        $filterTanggal = is_array($request->input('tanggal')) ? null : $request->input('tanggal');
+        $filterLokasi  = is_array($request->input('lokasi')) ? null : $request->input('lokasi');
 
         $monitorings = WaterMonitoring::with(['user', 'location'])
             ->when(! $user->isAdmin(), fn ($query) => $query->where('user_id', $user->id))

@@ -61,7 +61,10 @@ class Kernel extends HttpKernel
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
         'role' => \App\Http\Middleware\RoleMiddleware::class,
-        'signed' => \App\Http\Middleware\ValidateSignature::class,
+        // 'signed' middleware removed - sistem tidak menggunakan signed URLs
+        // Jika perlu signed URLs di masa depan (misal untuk foto access dengan expiry),
+        // uncomment baris berikut dan tambahkan ke routes yang memerlukan:
+        // 'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
     ];

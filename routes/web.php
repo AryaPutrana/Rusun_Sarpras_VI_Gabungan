@@ -30,8 +30,10 @@ Route::get('/', function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    // Rate limiting ditangani langsung di AuthController dengan logic custom
+    // (increment hanya pada failed attempts, clear on success)
+    // Tidak menggunakan middleware throttle:login untuk menghindari double limiting
     Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:login')
         ->name('login.attempt');
 });
 
@@ -96,23 +98,27 @@ Route::middleware('auth')->group(function () {
         ->name('foto.finance');
 
     // ========== INVENTORY MATERIAL ==========
-    // Semua role dapat akses inventory (admin & petugas)
-    Route::prefix('inventory')->name('inventory.')->group(function () {
-        // Items (Inventory Barang)
-        Route::resource('items', ItemController::class);
-        
-        // Withdrawals (Pengambilan Barang)
-        Route::resource('withdrawals', WithdrawalController::class);
-        
-        // Reports (Laporan Pengambilan)
-        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-        
-        // Export routes dengan rate limiting
-        Route::middleware('throttle:exports')->group(function () {
-            Route::get('/reports/export/pdf', [ReportController::class, 'exportPdf'])
-                ->name('reports.pdf');
-            Route::get('/reports/export/excel', [ReportController::class, 'exportExcel'])
-                ->name('reports.excel');
+    // Hanya admin & petugas yang dapat akses inventory
+    Route::prefix('inventory')
+        ->name('inventory.')
+        ->middleware('role:admin,petugas')
+        ->group(function () {
+            // Items (Inventory Barang)
+            Route::resource('items', ItemController::class);
+            
+            // Withdrawals (Pengambilan Barang)
+            Route::resource('withdrawals', WithdrawalController::class);
+            
+            // Reports (Laporan Pengambilan)
+            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+            
+            // Export routes dengan rate limiting dan CSRF protection
+            // Menggunakan POST untuk mencegah CSRF attacks dan DoS abuse
+            Route::middleware('throttle:exports')->group(function () {
+                Route::post('/reports/export/pdf', [ReportController::class, 'exportPdf'])
+                    ->name('reports.pdf');
+                Route::post('/reports/export/excel', [ReportController::class, 'exportExcel'])
+                    ->name('reports.excel');
+            });
         });
-    });
 });

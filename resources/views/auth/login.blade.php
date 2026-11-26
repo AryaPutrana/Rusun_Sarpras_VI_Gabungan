@@ -153,7 +153,7 @@
                     <i class="bi bi-droplet-fill fs-3"></i>
                 </span>
                 <h5 class="card-title fw-bold mb-1">Sistem Sarana dan Prasarana</h5>
-                <p class="text-muted small mb-0">Monitoring Kondisi Air GWT Harian &amp; Bulanan</p>
+                <p class="text-muted small mb-0">Monitoring Kondisi Air GWT &amp; Inventory Barang</p>
             </div>
 
             <form method="POST" action="{{ route('login.attempt') }}">

@@ -35,7 +35,7 @@ class StoreWaterMonitoringRequest extends FormRequest
             'tanggal' => ['required', 'date', 'before_or_equal:today'],
             'sesi' => ['required', Rule::in(array_keys(WaterMonitoring::SESI))],
             'kondisi' => ['required', Rule::in(array_keys(WaterMonitoring::KONDISI))],
-            'keterangan' => ['required', 'string'],
+            'keterangan' => ['required', 'string', 'max:65000'], // TEXT max 65535, sisakan buffer
             'foto' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
         ];
     }

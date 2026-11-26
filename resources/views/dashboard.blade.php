@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
@@ -318,7 +319,7 @@
         <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam"></i> Inventory Material</h5>
         <a href="{{ route('inventory.items.index') }}" class="btn btn-light btn-sm">Lihat Semua</a>
     </div>
-    
+
     <div class="row g-3 mb-3">
         <div class="col-6 col-md-3">
             <div class="inventory-card card shadow-sm h-100">
@@ -394,7 +395,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6">
             <div class="inventory-card card shadow-sm">
                 <div class="card-header bg-white">
@@ -457,9 +458,20 @@
 
 @push('scripts')
 <script>
-    const ctx = document.getElementById('kondisiChart');
-    if (ctx) {
-        new Chart(ctx, {
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ==========================================
+    // GRAFIK REKAP KONDISI
+    // ==========================================
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js belum berhasil dimuat. Periksa koneksi CDN Chart.js.');
+        return;
+    }
+
+    const kondisiCanvas = document.getElementById('kondisiChart');
+
+    if (kondisiCanvas) {
+        new Chart(kondisiCanvas, {
             type: 'doughnut',
             data: {
                 labels: @json($chartLabels),
@@ -473,81 +485,135 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom' },
+                    legend: {
+                        position: 'bottom'
+                    },
                 },
             },
         });
     }
 
-    const lokCtx = document.getElementById('lokasiChart');
-    if (lokCtx) {
-        new Chart(lokCtx, {
+    // ==========================================
+    // GRAFIK KONDISI PER LOKASI
+    // ==========================================
+    const lokasiCanvas = document.getElementById('lokasiChart');
+
+    if (lokasiCanvas) {
+        new Chart(lokasiCanvas, {
             type: 'bar',
             data: {
                 labels: @json($stackLabels),
                 datasets: [
-                    { label: 'Normal', data: @json($stackNormal), backgroundColor: '#198754' },
-                    { label: 'Debit Turun', data: @json($stackDebit), backgroundColor: '#ffc107' },
-                    { label: 'Tekanan Air Kecil', data: @json($stackTekanan), backgroundColor: '#dc3545' },
+                    {
+                        label: 'Normal',
+                        data: @json($stackNormal),
+                        backgroundColor: '#198754'
+                    },
+                    {
+                        label: 'Debit Turun',
+                        data: @json($stackDebit),
+                        backgroundColor: '#ffc107'
+                    },
+                    {
+                        label: 'Tekanan Air Kecil',
+                        data: @json($stackTekanan),
+                        backgroundColor: '#dc3545'
+                    },
                 ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { stacked: true },
-                    y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+                    x: {
+                        stacked: true
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    },
                 },
                 plugins: {
-                    legend: { position: 'bottom' },
+                    legend: {
+                        position: 'bottom'
+                    },
                 },
             },
         });
     }
+});
 
-    document.addEventListener('submit', function (event) {
-        const form = event.target;
-        if (! form || form.id !== 'financeForm') return;
 
-        event.preventDefault();
+// ==========================================
+// FILTER LAPORAN KEUANGAN
+// ==========================================
+document.addEventListener('submit', function (event) {
+    const form = event.target;
 
-        const input = form.querySelector('input[name="bulan"]');
-        if (! input || ! input.value) return;
+    if (!form || form.id !== 'financeForm') {
+        return;
+    }
 
-        const params = new URLSearchParams(window.location.search);
-        params.set('bulan', input.value);
+    event.preventDefault();
 
-        const btn = form.querySelector('button[type="submit"]');
-        const originalText = btn ? btn.textContent : '';
+    const input = form.querySelector('input[name="bulan"]');
 
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = 'Memuat...';
-        }
+    if (!input || !input.value) {
+        return;
+    }
 
-        fetch('{{ route('dashboard.finance-section') }}?' + params.toString(), {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    const params = new URLSearchParams(window.location.search);
+    params.set('bulan', input.value);
+
+    const btn = form.querySelector('button[type="submit"]');
+    const originalText = btn ? btn.textContent : '';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Memuat...';
+    }
+
+    fetch('{{ route('dashboard.finance-section') }}?' + params.toString(), {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+    })
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error('Gagal memuat data');
+            }
+
+            return response.text();
         })
-            .then(function (response) {
-                if (! response.ok) throw new Error('Gagal memuat data');
-                return response.text();
-            })
-            .then(function (html) {
-                const section = document.getElementById('finance-section');
-                if (section) section.innerHTML = html;
+        .then(function (html) {
+            const section = document.getElementById('finance-section');
 
-                const url = new URL(window.location.href);
-                url.searchParams.set('bulan', input.value);
-                window.history.replaceState({}, '', url.toString());
-            })
-            .catch(function (err) {
-                console.error(err);
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                }
-                window.location.reload();
-            });
-    });
+            if (section) {
+                section.innerHTML = html;
+            }
+
+            const url = new URL(window.location.href);
+            url.searchParams.set('bulan', input.value);
+            window.history.replaceState({}, '', url.toString());
+
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        })
+        .catch(function (err) {
+            console.error(err);
+
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+
+            window.location.reload();
+        });
+});
 </script>
 @endpush

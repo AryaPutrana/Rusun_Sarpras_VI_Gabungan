@@ -101,7 +101,10 @@
                                     <form action="{{ route('inventory.withdrawals.destroy', $withdrawal->id) }}" 
                                           method="POST" 
                                           class="d-inline m-0" 
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengambilan ini?\n\nPengambil: {{ $withdrawal->taken_by }}\nJumlah: {{ $withdrawal->total_quantity }} unit ({{ $withdrawal->items->count() }} jenis barang)\n\nStok barang akan dikembalikan.');">
+                                          data-pengambil="{{ e($withdrawal->taken_by) }}"
+                                          data-jumlah="{{ $withdrawal->total_quantity }}"
+                                          data-jenis="{{ $withdrawal->items->count() }}"
+                                          onsubmit="return confirmDeleteWithdrawal(this);">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
@@ -132,4 +135,19 @@
         @endif
     </div>
 </div>
+
+<script>
+// Safe delete confirmation - prevents XSS via taken_by field
+function confirmDeleteWithdrawal(form) {
+    // Ambil data dari data attributes (sudah di-escape oleh Laravel)
+    const pengambil = form.getAttribute('data-pengambil');
+    const jumlah = form.getAttribute('data-jumlah');
+    const jenis = form.getAttribute('data-jenis');
+    
+    // Buat pesan confirm (semua sudah aman dari XSS)
+    const message = `Apakah Anda yakin ingin menghapus pengambilan ini?\n\nPengambil: ${pengambil}\nJumlah: ${jumlah} unit (${jenis} jenis barang)\n\nStok barang akan dikembalikan.`;
+    
+    return confirm(message);
+}
+</script>
 @endsection
